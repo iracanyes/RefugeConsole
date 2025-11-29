@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "RefugeConsole": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}

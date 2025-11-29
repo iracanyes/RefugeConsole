@@ -1,0 +1,31 @@
+services:
+#  refugeconsole:
+#    image: ${DOCKER_REGISTRY-}refugeconsole
+#    build:
+#      context: .
+#      dockerfile: RefugeConsole/Dockerfile
+  db:
+    container_name: refuge-db
+    image: postgres
+    restart: unless-stopped
+    # set shared memory limit when using docker-compose
+    shm_size: 1gb
+    user: postgres
+    env_file:
+      - ./.env
+    volumes:
+      - refuge-db-data:/var/lib/postgresql/data
+    environment:
+      - PGUSER=postgres
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_ADMIN}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    ports:
+      - "${DB_PORT}:5432"
+    healthcheck:
+      test: [ "CMD", "pg_isready -d $${DB_NAME} -U $${DB_ADMIN}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+volumes:
+  refuge-db-data:
