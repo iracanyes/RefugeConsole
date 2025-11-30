@@ -1,0 +1,50 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Text;
+
+namespace RefugeConsole.ClassesMetiers.Helper
+{
+    internal static class MyEnumHelper
+    {
+        /**
+         * <summary>
+         *  Retrieve the descritption attribute value associated with the specified enum value
+         * </summary>
+         * 
+         * <param name="value">
+         *  The <see langword="enum"/> value for which to retrieve the description
+         * </param>
+         * 
+         * <returns>
+         *  The description associated with the <see langword="enum"/>, if available;
+         *  otherwise, the string representation of the <see langword="enum"/> value.
+         * </returns>
+         * 
+         * <remarks>
+         *  This method retrieves the description attribute value, if present, 
+         *  associated with the specified  <see langword="enum"/> value.
+         *  <para/>
+         *  If no description attribute is found, it returns the string representation
+         *  of  <see langword="enum"/> value.
+         * </remarks>
+         * 
+         */
+        public static string GetEnumDescription<T>(T value) where T : Enum
+        {
+            var field = value.GetType().GetField(value.ToString());
+
+            var attribute = (DescriptionAttribute[])field.GetCustomAttributes(
+                typeof(DescriptionAttribute),
+                false
+            );
+
+            return attribute == null ? value.ToString() : attribute[0].Description;
+        }
+
+        public static bool EqualsDefaultValue<T>(T value)
+        {
+            return EqualityComparer<T>.Default.Equals(value, default);
+        }
+    }
+}
