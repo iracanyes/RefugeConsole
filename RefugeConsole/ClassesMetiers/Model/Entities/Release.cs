@@ -36,6 +36,8 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
         public Guid AdmissionId { get; set; }
         public Admission Admission { get; set; }
 
+
+
         public override string ToString()
         {
             return string.Format(

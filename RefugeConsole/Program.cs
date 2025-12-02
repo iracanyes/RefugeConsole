@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using RefugeConsole.ClassesMetiers.Config;
 using System;
 
 namespace RefugeConsole
@@ -9,6 +10,26 @@ namespace RefugeConsole
         public static void Main(string[] args)
         {
             Console.WriteLine("\tBienvenue au refuge\t\n================================");
+            
+            // Load environment variables file
+            LoadEnvVars();
+
+
+
+        }
+
+        private static void LoadEnvVars()
+        {
+            try
+            {
+                // Load environment variables file 
+                var root = Directory.GetCurrentDirectory();
+                var dotEnvFile = Path.Combine(root, ".env");
+                DotEnv.Load(dotEnvFile);
+            }
+            catch (Exception ex) {
+                MyLogger.LogError("Error while loading environmnent file .env. Reason : {0}", ex.Message);
+            }
         }
     }
 }

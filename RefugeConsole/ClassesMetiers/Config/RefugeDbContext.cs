@@ -14,11 +14,9 @@ namespace RefugeConsole.ClassesMetiers.Config
     {
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
-            var root = Directory.GetCurrentDirectory();
-            var dotEnvFile = Path.Combine(root, ".env");
-            DotEnv.Load(dotEnvFile);
+            
 
-            Console.WriteLine($"Connection string : {Environment.GetEnvironmentVariable("REFUGE_DB_CONNECTION_STRING")}");
+            //Console.WriteLine($"Connection string : {Environment.GetEnvironmentVariable("REFUGE_DB_CONNECTION_STRING")}");
             options.UseNpgsql(Environment.GetEnvironmentVariable("REFUGE_DB_CONNECTION_STRING"));
         }
 
@@ -42,6 +40,9 @@ namespace RefugeConsole.ClassesMetiers.Config
                 .IsUnique();
 
             /*- Inheritance -*/
+            // Using the default strategy : TPH 
+            // One single table with a discriminator property
+            /*
             modelBuilder.Entity<Contact>()
                 .HasDiscriminator<string>("Type")
                 .HasValue<OtherContact>(MyEnumHelper.GetEnumDescription(ContactType.OtherContact))
@@ -49,6 +50,18 @@ namespace RefugeConsole.ClassesMetiers.Config
                 .HasValue<FosterFamily>(MyEnumHelper.GetEnumDescription(ContactType.FosterFamily))
                 .HasValue<Candidate>(MyEnumHelper.GetEnumDescription(ContactType.Candidate))
                 .HasValue<Adopter>(MyEnumHelper.GetEnumDescription(ContactType.Adopter));
+            */
+
+            // Create table for each type
+            modelBuilder.Entity<Contact>()
+                .UseTpcMappingStrategy()
+                .ToTable("Contacts");
+            modelBuilder.Entity<OtherContact>().ToTable("OtherContacts");
+            modelBuilder.Entity<Volunteer>().ToTable("Volunteers");
+            modelBuilder.Entity<FosterFamily>().ToTable("FosterFamilies");
+            modelBuilder.Entity<Candidate>().ToTable("Candidates");
+            modelBuilder.Entity<Adopter>().ToTable("Adopters");
+
 
             /*- Other constraints -*/
             modelBuilder.Entity<Animal>()

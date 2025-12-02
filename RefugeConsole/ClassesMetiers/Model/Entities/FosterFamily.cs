@@ -36,6 +36,10 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
             }
         }
 
+        public Guid ReleaseId { get; set; }
+        public Release Release { get; set; }
+
+
         public override string ToString()
         {
             return string.Format(

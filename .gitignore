@@ -120,4 +120,5 @@ docker/db/password.txt
 # EntityFramework.Tools 
 # Migrations
 **/Migrations
+**/*.sql
 
