@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using RefugeConsole.ClassesMetiers.Config;
+using RefugeConsole.CouchePresentation.View;
 using System;
 
 namespace RefugeConsole
@@ -14,7 +15,7 @@ namespace RefugeConsole
             // Load environment variables file
             LoadEnvVars();
 
-
+            MenuView.Display();
 
         }
 
