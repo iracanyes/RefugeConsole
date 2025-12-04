@@ -39,10 +39,13 @@ namespace RefugeConsole.ClassesMetiers.Helper
                 : default;
         }
 
-        /// <summary>
-        ///   Display enum elements as a menu with enum element value as marker for choice
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
+        /**
+         * 
+         * <summary>
+         *   Display enum elements as a menu with enum element value as marker for choice
+         * </summary>
+         * <typeparam name="T"></typeparam>
+         */ 
         public static void DisplayMenu<T>() where T : struct, Enum
         {
             
@@ -53,8 +56,7 @@ namespace RefugeConsole.ClassesMetiers.Helper
             {
                 if (!MyEnumHelper.EqualsDefaultValue(choice))
                 {
-                    ArgumentNullException.ThrowIfNull(choice, nameof(T));
-
+                    
                     var description = MyEnumHelper.GetEnumDescription(choice);
                     Console.WriteLine($"[{menuItemNumber}] : {description}");
                     menuItemNumber++;

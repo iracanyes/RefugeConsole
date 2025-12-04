@@ -8,8 +8,10 @@ namespace RefugeConsole.ClassesMetiers.Model.Enums
     internal enum GenderType
     {
         [Description("Male")]
-        Male,
+        Male = 1,
         [Description("Femelle")]
-        Female
+        Female = 2,
+        [Description("Inconnu")]
+        Unknown = 0,
     }
 }

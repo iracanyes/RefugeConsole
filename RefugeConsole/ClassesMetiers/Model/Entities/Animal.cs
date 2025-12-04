@@ -1,8 +1,11 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
+using Microsoft.Extensions.Logging;
+using RefugeConsole.ClassesMetiers.Helper;
 using RefugeConsole.ClassesMetiers.Model.Enums;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace RefugeConsole.ClassesMetiers.Model.Entities
@@ -10,30 +13,65 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
     internal class Animal
     {
         private static ILogger MyLogger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger(nameof(Animal));
-        
+        private static Random randomGenerator = new Random();
+        private static DateTime yesterday = DateTime.Now;
 
-        
         public Animal(
-            string id, 
-            string name, 
-            string type, 
-            string gender, 
+            string name,
+            AnimalType type,
+            GenderType gender,
             string color,
-            DateOnly birthDate,
-            bool isSterilized, 
-            string particularity, 
+            DateOnly? birthDate,
+            DateOnly? deathDate,
+            bool isSterilized,
+            DateOnly? dateSterilization,
+            string particularity,
             string description
-        ) {
-            this.Id = id;
+        ){
+                                   
+
+            this.Id = DateOnly.FromDateTime(DateTime.Now).ToString("yyMMdd") + randomGenerator.Next(0, 99999).ToString("D5");
             this.Name = name;
-            this.Type = type;
-            this.Gender = gender;
+            this.Type = MyEnumHelper.GetEnumDescription(type);
+            this.Gender = MyEnumHelper.GetEnumDescription(gender);
             this.Color = color;
             this.BirthDate = birthDate;
+            this.DeathDate = deathDate;
             this.IsSterilized = isSterilized;
+            this.DateSterilization = dateSterilization;
             this.Particularity = particularity;
             this.Description = description;
         }
+        
+
+        public Animal(
+            string id,
+            string name,
+            AnimalType type,
+            GenderType gender,
+            string color,
+            DateOnly? birthDate,
+            DateOnly? deathDate,
+            bool isSterilized,
+            DateOnly? dateSterilization,
+            string particularity,
+            string description
+        )
+        {
+            this.Id = id;
+            this.Name = name;
+            this.Type = MyEnumHelper.GetEnumDescription(type);
+            this.Gender = MyEnumHelper.GetEnumDescription(gender);
+            this.Color = color;
+            this.BirthDate = birthDate;
+            this.DeathDate = deathDate;
+            this.IsSterilized = isSterilized;
+            this.DateSterilization = dateSterilization;
+            this.Particularity = particularity;
+            this.Description = description;
+        }
+
+
 
         [Key]
         public string Id { get; set; }
@@ -48,13 +86,13 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
         [Required]
         public string Color { get; set; }
         
-        public DateOnly BirthDate { get; set; }
+        public DateOnly? BirthDate { get; set; }
 
-        public DateOnly DeathDate { get; set; }
+        public DateOnly? DeathDate { get; set; }
         [Required]
         public Boolean IsSterilized { get; set; }
 
-        public DateOnly DateSterilization { get; set; }
+        public DateOnly? DateSterilization { get; set; }
 
         public string Particularity { get; set; }
 

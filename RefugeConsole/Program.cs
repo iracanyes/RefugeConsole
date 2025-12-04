@@ -12,13 +12,16 @@ namespace RefugeConsole
         {
             Console.WriteLine("\tBienvenue au refuge\t\n================================");
             
-            // Load environment variables file
+            // Load environment variables file for the application
             LoadEnvVars();
 
             MenuView.Display();
 
         }
 
+        /**
+         * Load environment variables file for the application
+         */
         private static void LoadEnvVars()
         {
             try

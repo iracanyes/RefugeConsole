@@ -5,14 +5,15 @@ namespace RefugeConsole.ClassesMetiers.Model.Enums
     internal enum ContactType
     {
         [Description("Autres contact")]
-        OtherContact = 0,
+        OtherContact = 1,
         [Description("Volontaire")]
-        Volunteer = 1,
+        Volunteer = 2,
         [Description("Candidat")]
-        Candidate = 2,
+        Candidate = 3,
         [Description("Famille d'accueil")]
-        FosterFamily = 3,
+        FosterFamily = 4,
         [Description("Adoptant")]
-        Adopter = 4,
+        Adopter = 5,
+        Unknown = 0,
     }
 }

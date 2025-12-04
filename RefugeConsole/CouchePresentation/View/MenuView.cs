@@ -1,4 +1,5 @@
 ﻿using RefugeConsole.ClassesMetiers.Helper;
+using RefugeConsole.CoucheAccesDB;
 using RefugeConsole.CouchePresentation.ViewModel;
 using RefugeConsole.CouchePresentation.ViewModel.Enums;
 using System;
@@ -15,8 +16,8 @@ namespace RefugeConsole.CouchePresentation.View
 
         static MenuView()
         {
-            animalViewModel = new AnimalViewModel();
-            contactViewModel = new ContactViewModel();
+            animalViewModel = new AnimalViewModel(new AnimalDataService());
+            contactViewModel = new ContactViewModel(new ContactDataService());
             refugeViewModel = new RefugeViewModel();
         }
 

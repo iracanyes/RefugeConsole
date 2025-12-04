@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Text;
 
 namespace RefugeConsole.ClassesMetiers.Helper
@@ -34,7 +35,7 @@ namespace RefugeConsole.ClassesMetiers.Helper
         {
             var field = value.GetType().GetField(value.ToString());
 
-            var attribute = (DescriptionAttribute[])field.GetCustomAttributes(
+            var attribute = (DescriptionAttribute[]) field!.GetCustomAttributes(
                 typeof(DescriptionAttribute),
                 false
             );
@@ -42,9 +43,55 @@ namespace RefugeConsole.ClassesMetiers.Helper
             return attribute == null ? value.ToString() : attribute[0].Description;
         }
 
+        /**
+         * <summary>
+         *  Check if enum value provided is equal to the default value for that enum type (enum value : 0)
+         * </summary>
+         * 
+         */
         public static bool EqualsDefaultValue<T>(T value)
         {
             return EqualityComparer<T>.Default.Equals(value, default);
         }
+
+
+        public static T GetEnumFromDescription<T>(string description)
+        {
+            T? result = default;
+            var type = typeof(T);
+
+            try
+            {
+                foreach(var field in type.GetFields())
+                {
+                    if(Attribute.GetCustomAttribute(field, typeof(DescriptionAttribute)) is DescriptionAttribute attribute)
+                    {
+                        if (attribute.Description == description) 
+                            result = (T) field.GetValue(null)!;
+                    }
+                    else
+                    {
+                        if (field.Name == description) 
+                            result = (T) field.GetValue(null)!;
+                    }
+
+                }
+
+                if (EqualsDefaultValue<T>(result!))
+                {
+                    throw new Exception($"Enum ({nameof(T)}) doesn't contain the Enum Description provided ");
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error while retrieving the enum from enum description. Reason : {ex.Message}");
+            }
+
+            if (result == null) throw new Exception($"Unable to get the enum's default value for {nameof(T)}.");
+
+            return result;
+        }
+
     }
 }
