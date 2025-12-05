@@ -23,11 +23,13 @@ namespace RefugeConsole.CouchePresentation.ViewModel
             try
             {
                 string name = SharedView.InputString("Entrez le nom de l'animal : ");
-                Animal animal = animalDataService.GetAnimal(name);
+                Animal? animal = animalDataService.GetAnimal(name);
 
                 if (animal == null)
                 {
-                    throw new Exception($"Animal named ({name}) not found!");
+                    Console.WriteLine($"Animal with name '{name}' not found!");
+                    SharedView.WaitForKeyPress();
+                    return;
                 }
 
                 AnimalView.DisplayAnimal(animal);
@@ -59,8 +61,62 @@ namespace RefugeConsole.CouchePresentation.ViewModel
             }
         }
 
-        public void UpdateAnimal() { }
+        public void UpdateAnimal()
+        {
+            try
+            {
+                string name = SharedView.InputString("Entrez le nom de l'animal : ");
+                Animal? animalInfo = animalDataService.GetAnimal(name);
 
-        public void RemoveAnimal() { }
+                if (animalInfo == null)
+                {
+                    Console.WriteLine($"Animal with name '{name}' not found!");
+                    SharedView.WaitForKeyPress();
+                    return;
+                }
+
+
+                Animal updatedAnimalInfo = AnimalView.UpdateAnimal(animalInfo);
+
+                Debug.WriteLine($"Animal info to update : \n{updatedAnimalInfo}");
+
+                Animal updatedAnimal = animalDataService.UpdateAnimal(updatedAnimalInfo);
+
+                AnimalView.DisplayAnimal(updatedAnimal);
+
+
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error while updating the animal! Reason : {ex.Message}\nException:\n{ex}");
+            }
+        }
+
+        public void RemoveAnimal() {
+            try
+            {
+                string name = SharedView.InputString("Entrez le nom de l'animal : ");
+                Animal? animalInfo = animalDataService.GetAnimal(name);
+
+                if (animalInfo == null)
+                {
+                    Console.WriteLine($"Animal with name '{name}' not found!");
+                    SharedView.WaitForKeyPress();
+                    return;
+                }
+
+                bool result = animalDataService.RemoveAnimal(animalInfo);
+
+                if (result) Console.WriteLine("L'animal nommé {name} a été supprimé!");
+
+                SharedView.WaitForKeyPress();
+            }
+            catch (Exception ex)
+            {
+
+                Debug.WriteLine($"Error while removing an animal! Reason: {ex.Message}");
+                MyLogger.LogError($"Error while removing an animal! Reason: {ex.Message}");
+            }
+        }
     }
 }

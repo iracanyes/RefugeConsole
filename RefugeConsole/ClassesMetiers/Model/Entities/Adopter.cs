@@ -9,18 +9,24 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
 {
     internal class Adopter: Contact
     {
-        public Adopter(Guid id, DateTime dateCreated, DateOnly dateStart, DateOnly dateEnd)
+        public Adopter(Guid id, DateTime dateCreated, DateOnly dateStart, DateOnly dateEnd, Release release)
             : base(id, MyEnumHelper.GetEnumDescription<ContactType>(ContactType.Adopter), dateCreated)
         {
             DateStart = dateStart;
             DateEnd = dateEnd;
+
+            Release = release;
+            ReleaseId = release.Id;
         }
 
-        public Adopter(Guid id, DateTime dateCreated, ContactInfo contactInfo, DateOnly dateStart, DateOnly dateEnd)
+        public Adopter(Guid id, DateTime dateCreated, ContactInfo contactInfo, DateOnly dateStart, DateOnly dateEnd, Release release)
             : base(id, MyEnumHelper.GetEnumDescription<ContactType>(ContactType.Adopter), dateCreated, contactInfo)
         {
             DateStart = dateStart;
             DateEnd = dateEnd;
+
+            Release = release;
+            ReleaseId = release.Id;
         }
 
         [Required]
@@ -31,7 +37,7 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
             {
                 if (DateStart > value)
                     throw new ArgumentOutOfRangeException("End date can't be before start date!");
-                DateEnd = value;
+                field = value;
             } 
         }
 

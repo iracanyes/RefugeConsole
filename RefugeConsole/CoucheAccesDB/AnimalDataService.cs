@@ -89,15 +89,17 @@ namespace RefugeConsole.CoucheAccesDB
                     throw new AccessDbException("Error while creating an animal", ex.Message);
             }
 
+            if (result == null) throw new Exception($"Unable to find newly created animal with name {animal.Name}");
+
             return result;
         }
 
-        public Animal AddCompatibility(Animal animal, Compatibility compatibility)
+        public Animal CreateCompatibility(Animal animal, Compatibility compatibility)
         {
             throw new NotImplementedException();
         }
 
-        public Animal GetAnimal(string name)
+        public Animal? GetAnimal(string name)
         {
             Animal? result = null;
             NpgsqlCommand? sqlCmd = null;
@@ -157,26 +159,133 @@ namespace RefugeConsole.CoucheAccesDB
             }
             catch (Exception ex)
             {
+                if(reader != null) reader.Close();
 
-                if (sqlCmd != null)
+                if(sqlCmd != null)
                     throw new AccessDbException(sqlCmd.CommandText, ex.ToString());
                 else
                     throw new AccessDbException("Error while retrieving an animal", ex.ToString());
             }
 
-            if (result == null) throw new Exception("Unknown error while retrieving an animal");
+            
 
             return result;
         }
 
         public bool RemoveAnimal(Animal animal)
         {
-            throw new NotImplementedException();
+            bool result = false;
+            NpgsqlCommand? sqlCmd = null;
+
+            try
+            {
+                sqlCmd = new NpgsqlCommand(
+                    $"""
+                    DELETE FROM public."Animals" a
+                    WHERE "Id" = :id
+                    """, 
+                    this.SqlConn
+                );
+
+                sqlCmd.Parameters.Add(new NpgsqlParameter("id", NpgsqlTypes.NpgsqlDbType.Varchar));
+
+                sqlCmd.Prepare();
+
+                sqlCmd.Parameters["id"].Value = animal.Id;
+
+                int response = sqlCmd.ExecuteNonQuery();
+
+                if (response == 0) throw new AccessDbException(sqlCmd.CommandText, $"Error while deleting an animal with ID({animal.Id})");
+
+                result = true;
+            }
+            catch (Exception ex)
+            {
+                if(sqlCmd != null)
+                    throw new AccessDbException(sqlCmd.CommandText, ex.Message);
+                else
+                    throw new AccessDbException("Error while creating the SQL command instance!", ex.Message);
+            }
+
+            return result;
         }
 
-        public bool UpdateAnimal(Animal animal)
+        public Animal UpdateAnimal(Animal animal)
         {
-            throw new NotImplementedException();
+            Animal? result = null;
+            NpgsqlCommand? sqlCmd = null;
+
+            try
+            {
+                sqlCmd = new NpgsqlCommand(
+                    $"""
+                    UPDATE public."Animals"
+                    SET "Name" = :name,
+                        "Type" = :type,
+                        "Gender" = :gender,
+                        "Color" = :color,
+                        "BirthDate" = :dateBirth,
+                        "DeathDate" = :dateDeath,
+                        "IsSterilized" = :isSterilized,
+                        "DateSterilization" = :dateSterilization,
+                        "Particularity" = :particularity,
+                        "Description" = :description
+                    WHERE "Id" = :id
+                    """,
+                    this.SqlConn
+                );
+
+                sqlCmd.Parameters.Add(new NpgsqlParameter("id", NpgsqlTypes.NpgsqlDbType.Text));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("name", NpgsqlTypes.NpgsqlDbType.Text));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("type", NpgsqlTypes.NpgsqlDbType.Text));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("gender", NpgsqlTypes.NpgsqlDbType.Text));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("color", NpgsqlTypes.NpgsqlDbType.Text));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("dateBirth", NpgsqlTypes.NpgsqlDbType.Date));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("dateDeath", NpgsqlTypes.NpgsqlDbType.Date));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("isSterilized", NpgsqlTypes.NpgsqlDbType.Boolean));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("dateSterilization", NpgsqlTypes.NpgsqlDbType.Date));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("particularity", NpgsqlTypes.NpgsqlDbType.Text));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("description", NpgsqlTypes.NpgsqlDbType.Text));
+
+                // Prepare the parametized statement
+                sqlCmd.Prepare();
+
+
+                // Parameters value
+                sqlCmd.Parameters["id"].Value = animal.Id;
+                sqlCmd.Parameters["name"].Value = animal.Name;
+                sqlCmd.Parameters["type"].Value = animal.Type;
+                sqlCmd.Parameters["gender"].Value = animal.Gender;
+                sqlCmd.Parameters["color"].Value = animal.Color;
+                sqlCmd.Parameters["dateBirth"].Value = animal.BirthDate;
+                sqlCmd.Parameters["dateDeath"].Value = animal.DeathDate != null ? animal.DeathDate : DBNull.Value;
+                sqlCmd.Parameters["isSterilized"].Value = animal.IsSterilized;
+                sqlCmd.Parameters["dateSterilization"].Value = animal.DateSterilization != null ? animal.DateSterilization : DBNull.Value;
+                sqlCmd.Parameters["particularity"].Value = animal.Particularity != null ? animal.Particularity : DBNull.Value;
+                sqlCmd.Parameters["description"].Value = animal.Description != null ? animal.Description : DBNull.Value;
+
+                // Parametized statement execution
+                int nbRowAffected = sqlCmd.ExecuteNonQuery();
+
+                if (nbRowAffected == 0) throw new AccessDbException(sqlCmd.CommandText, $"Unable to update animal with id {animal.Id}! No row affected!");
+
+                result = GetAnimal(animal.Name);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"AnimalDataService : Error while updating an animal with name {animal.Name} in DB!\nException :\n{ex.Message}\nException:\n{ex}");
+
+                if (sqlCmd != null)
+                    throw new AccessDbException(sqlCmd.CommandText, ex.Message);
+                else
+                    throw new AccessDbException("Error while creating the SQL command instance!", ex.Message);
+
+                
+            }
+
+            if (result == null) throw new Exception($"Unknown error while updating animal with name {animal.Name}.");
+
+            return result!;
         }
     }
 }

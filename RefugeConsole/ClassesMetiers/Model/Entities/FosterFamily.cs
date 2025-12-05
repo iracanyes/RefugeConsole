@@ -9,18 +9,24 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
 {
     internal class FosterFamily: Contact
     {
-        public FosterFamily(Guid id, DateTime dateCreated, DateOnly dateStart, DateOnly dateEnd)
+        public FosterFamily(Guid id, DateTime dateCreated, DateOnly dateStart, DateOnly dateEnd, Release release)
             : base(id, MyEnumHelper.GetEnumDescription<ContactType>(ContactType.FosterFamily), dateCreated)
         {
             DateStart = dateStart;
             DateEnd = dateEnd;
+
+            Release = release;
+            ReleaseId = release.Id;
         }
 
-        public FosterFamily(Guid id, DateTime dateCreated, ContactInfo contactInfo, DateOnly dateStart, DateOnly dateEnd)
+        public FosterFamily(Guid id, DateTime dateCreated, ContactInfo contactInfo, DateOnly dateStart, DateOnly dateEnd, Release release)
             : base(id, MyEnumHelper.GetEnumDescription<ContactType>(ContactType.FosterFamily), dateCreated, contactInfo) 
         {
             DateStart = dateStart;
             DateEnd = dateEnd;
+
+            Release = release;
+            ReleaseId = release.Id;
         }
 
         [Required]
@@ -32,7 +38,7 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
             {
                 if (DateStart > value)
                     throw new ArgumentOutOfRangeException("End date can't be before start date!");
-                DateEnd = value;
+                field = value;
             }
         }
 

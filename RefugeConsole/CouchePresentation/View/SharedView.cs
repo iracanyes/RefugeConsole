@@ -168,6 +168,12 @@ namespace RefugeConsole.CouchePresentation.View
             return result;
         }
 
+        /**
+         * <summary>
+         *  Display all member of an enum with their corresponding value. 
+         *  Capture the response value from user with must be equal to the value of one enum member and return it
+         * </summary>
+         */ 
         public static T EnumChoice<T>(string label) where T : struct, Enum
         {
             T result = default;
@@ -181,6 +187,15 @@ namespace RefugeConsole.CouchePresentation.View
 
             return result;
 
+        }
+
+        /**
+         * Lock console screen until the user press a key
+         */ 
+        public static void WaitForKeyPress()
+        {
+            Console.WriteLine("Pressez une touche pour continuer...");
+            Console.ReadKey(true);
         }
     }
 }

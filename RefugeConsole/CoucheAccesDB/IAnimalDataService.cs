@@ -9,13 +9,13 @@ namespace RefugeConsole.CoucheAccesDB
     {
         Animal CreateAnimal(Animal animal);
 
-        Animal GetAnimal(string name);
+        Animal? GetAnimal(string name);
 
-        bool UpdateAnimal(Animal animal);
+        Animal UpdateAnimal(Animal animal);
 
         bool RemoveAnimal(Animal animal);
 
-        Animal AddCompatibility(Animal animal, Compatibility compatibility);
+        Animal CreateCompatibility(Animal animal, Compatibility compatibility);
 
         
     }
