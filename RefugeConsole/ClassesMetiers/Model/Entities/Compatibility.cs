@@ -6,13 +6,11 @@ using System.Text;
 namespace RefugeConsole.ClassesMetiers.Model.Entities
 {
     internal class Compatibility
-    {
-        public Compatibility(Guid id, string type, string value, string description)
+    {        
+        public Compatibility(string type, string value, string description, Animal animal)
+            : this(Guid.NewGuid(), type, value, description, animal) 
         {
-            this.Id = id;
-            this.Type = type;
-            this.Value = value;
-            this.Description = description;
+        
         }
 
         public Compatibility(Guid id, string type, string value, string description, Animal animal) {
@@ -26,6 +24,7 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
             this.Animal = animal;
             this.AnimalId = animal.Id;
         }
+
         [Key]
         public Guid Id { get; private set; }
         [Required]

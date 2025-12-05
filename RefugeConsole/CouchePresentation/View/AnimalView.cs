@@ -168,5 +168,32 @@ namespace RefugeConsole.CouchePresentation.View
 
             return result!;
         }
+
+        public static List<Compatibility> AddCompatibility(Animal animal)
+        {
+            List<Compatibility> result = [];
+            bool add = false;
+
+            do
+            {
+                add = SharedView.InputBoolean($"Voulez-vous ajouter une nouvelle compatibilité pour {animal.Name} ? (Oui/Non)");
+
+                if (add)
+                {
+                    string type = SharedView.InputString("Quel est le type de compatibilité? (Chat, Chien, Jeune enfant, Enfant, Jardin, Poney)");
+                    string value = SharedView.InputString("Quel est sa valeur?");
+                    string description = SharedView.InputMultipleLines("Décrivez cette compatibilité?");
+
+                    Compatibility compatibility = new Compatibility(type, value, description, animal);
+
+                    animal.AddCompatibility(compatibility);
+                    result.Add(compatibility);
+
+                }
+            } while (add);
+
+
+            return result;
+        }
     }
 }

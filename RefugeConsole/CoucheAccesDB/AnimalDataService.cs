@@ -287,5 +287,51 @@ namespace RefugeConsole.CoucheAccesDB
 
             return result!;
         }
+
+
+        public bool CreateCompatibility(Compatibility compatibility)
+        {
+            bool result = false;
+            NpgsqlCommand? sqlCmd = null;
+
+            try
+            {
+                sqlCmd = new NpgsqlCommand(
+                    $"""
+                    INSERT INTO public."Compatibilities" ("Id", "Type", "Value", "Description", "AnimalId")
+                    VALUES (:id, :name, :type, :value, :description, :animalId)
+
+                    """,
+                    this.SqlConn
+                );
+
+                sqlCmd.Parameters.Add(new NpgsqlParameter("id", NpgsqlTypes.NpgsqlDbType.Uuid));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("name", NpgsqlTypes.NpgsqlDbType.Text));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("value", NpgsqlTypes.NpgsqlDbType.Text));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("description", NpgsqlTypes.NpgsqlDbType.Text));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("animalId", NpgsqlTypes.NpgsqlDbType.Text));
+
+                sqlCmd.Prepare();
+
+                sqlCmd.Parameters["id"].Value = compatibility.Id;
+                sqlCmd.Parameters["type"].Value = compatibility.Type;
+                sqlCmd.Parameters["value"].Value = compatibility.Value;
+                sqlCmd.Parameters["description"].Value = compatibility.Description;
+                sqlCmd.Parameters["animalId"].Value = compatibility.AnimalId;
+
+                int nbRowAffected = sqlCmd.ExecuteNonQuery();
+
+                if (nbRowAffected == 0) throw new AccessDbException(sqlCmd.CommandText, $"Unable to create a compatibility with an animal in Db.\nObject\n{compatibility}");
+
+                result = true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Unable to create a compatibility with an animal.\nReason : {ex.Message}.\nObject :\n{compatibility}\nException:\n{ex}");
+                throw;
+            }
+
+            return result;
+        }
     }
 }

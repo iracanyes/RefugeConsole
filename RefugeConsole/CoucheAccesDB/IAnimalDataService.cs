@@ -15,7 +15,7 @@ namespace RefugeConsole.CoucheAccesDB
 
         bool RemoveAnimal(Animal animal);
 
-        Animal CreateCompatibility(Animal animal, Compatibility compatibility);
+        bool CreateCompatibility(Compatibility compatibility);
 
         
     }

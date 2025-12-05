@@ -170,6 +170,7 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
             try
             {
                 Compatibilities.Add(compatibility);
+
             }
             catch (ArgumentException ex)
             {

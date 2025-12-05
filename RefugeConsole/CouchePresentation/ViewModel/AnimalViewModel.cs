@@ -51,6 +51,8 @@ namespace RefugeConsole.CouchePresentation.ViewModel
                 MyLogger.LogInformation($"Animal ID : {animalInfo.Id}");
 
                 Animal animal = animalDataService.CreateAnimal(animalInfo);
+                
+                this.AddCompatibilities(animal);
 
                 AnimalView.DisplayAnimal(animal);
 
@@ -100,22 +102,49 @@ namespace RefugeConsole.CouchePresentation.ViewModel
 
                 if (animalInfo == null)
                 {
-                    Console.WriteLine($"Animal with name '{name}' not found!");
+                    Console.WriteLine($"L'animal nommé '{name}' n'existe pas dans la base de donnée!");
                     SharedView.WaitForKeyPress();
                     return;
                 }
 
                 bool result = animalDataService.RemoveAnimal(animalInfo);
 
-                if (result) Console.WriteLine("L'animal nommé {name} a été supprimé!");
+                if (result) Console.WriteLine($"L'animal nommé {name} a été supprimé!");
 
                 SharedView.WaitForKeyPress();
             }
             catch (Exception ex)
             {
-
                 Debug.WriteLine($"Error while removing an animal! Reason: {ex.Message}");
                 MyLogger.LogError($"Error while removing an animal! Reason: {ex.Message}");
+            }
+        }
+
+        public void AddCompatibilities(Animal? animal)
+        {
+            
+            try
+            {
+                if(animal == null)
+                {
+                    string name = SharedView.InputString("Entrez le nom de l'animal :");
+                    animal = animalDataService.GetAnimal(name);
+                }
+                
+                List<Compatibility> result = AnimalView.AddCompatibility(animal!);
+
+                if (result.Count != 0)
+                {
+                    foreach(Compatibility compatibility in result) 
+                        animalDataService.CreateCompatibility(compatibility);
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+
+                Debug.WriteLine($"Error while adding compatibilities to an animal! Reason : {ex.Message}\nException:\n{ex}");
             }
         }
     }
