@@ -98,42 +98,127 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
 
         public string Description { get; set; }
 
-        public HashSet<Admission> Admissions { get; set; } = new HashSet<Admission>();
 
         public HashSet<Vaccination> Vaccinations { get; set; } = new HashSet<Vaccination>();
 
         public HashSet<Compatibility> Compatibilities { get; set; } = new HashSet<Compatibility>();
 
-        /*============= M&thodes d'instances =========================================================*/
+        public HashSet<Admission> Admissions { get; } = new HashSet<Admission>();
+
+        public HashSet<Release> Releases { get; } = new HashSet<Release>();
+
+        public HashSet<Adoption> Adoptions { get; } = new HashSet<Adoption>();
+
+        public HashSet<FosterFamily> FosterFamilies { get; } = new HashSet<FosterFamily>();
+
+        /*================ Méthodes d'instance =========================================*/
+        
+
         public void AddAdmission(Admission admission)
         {
             ArgumentNullException.ThrowIfNull(admission, nameof(admission));
-
             try
             {
-                Admissions.Add(admission);
+                this.Admissions.Add(admission);
             }
             catch (ArgumentException ex)
             {
-                MyLogger.LogError("Unable to add an admission. Reason : {0} ", ex.Message);
+                MyLogger.LogError("Unable to add the following adoption : " + admission.ToString() + "\nThe reason :" + ex.Message);
             }
+
         }
 
         public void RemoveAdmission(Admission admission)
         {
-            ArgumentNullException.ThrowIfNull(admission, nameof(admission));
-
             try
             {
-                Admissions.Remove(admission);
+                this.Admissions.Remove(admission);
             }
             catch (ArgumentException ex)
             {
-                MyLogger.LogError("Unable to remove an admission. Reason : {0} ", ex.Message);
+                MyLogger.LogError("Unable to remove the following adoption : " + admission.ToString() + "\nThe reason :" + ex.Message);
             }
         }
 
+        public void AddRelease(Release release)
+        {
+            ArgumentNullException.ThrowIfNull(release, nameof(release));
+            try
+            {
+                this.Releases.Add(release);
+            }
+            catch (ArgumentException ex)
+            {
+                MyLogger.LogError("Unable to add the following release : " + release.ToString() + "\nThe reason :" + ex.Message);
+            }
 
+        }
+
+        public void RemoveRelease(Release release)
+        {
+            try
+            {
+                this.Releases.Remove(release);
+            }
+            catch (ArgumentException ex)
+            {
+                MyLogger.LogError("Unable to remove the following release : " + release.ToString() + "\nThe reason :" + ex.Message);
+            }
+        }
+
+        public void AddAdoption(Adoption adoption)
+        {
+            ArgumentNullException.ThrowIfNull(adoption, nameof(adoption));
+            try
+            {
+                this.Adoptions.Add(adoption);
+            }
+            catch (ArgumentException ex)
+            {
+                MyLogger.LogError("Unable to add the following adoption : " + adoption.ToString() + "\nThe reason :" + ex.Message);
+            }
+
+        }
+
+        public void RemoveAdoption(Adoption adoption)
+        {
+            try
+            {
+                this.Adoptions.Remove(adoption);
+            }
+            catch (ArgumentException ex)
+            {
+                MyLogger.LogError("Unable to remove the following adoption : " + adoption.ToString() + "\nThe reason :" + ex.Message);
+            }
+        }
+
+        public void AddFosterFamily(FosterFamily fosterFamily)
+        {
+            ArgumentNullException.ThrowIfNull(fosterFamily, nameof(fosterFamily));
+            try
+            {
+                this.FosterFamilies.Add(fosterFamily);
+            }
+            catch (ArgumentException ex)
+            {
+                MyLogger.LogError("Unable to add the following animal welcomed as foster family : " + fosterFamily.ToString() + "\nThe reason :" + ex.Message);
+            }
+
+        }
+
+        public void RemoveFosterFamily(FosterFamily fosterFamily)
+        {
+            try
+            {
+                this.FosterFamilies.Remove(fosterFamily);
+            }
+            catch (ArgumentException ex)
+            {
+                MyLogger.LogError("Unable to remove the following animal welcomed as foster family : " + fosterFamily.ToString() + "\nThe reason :" + ex.Message);
+            }
+        }
+
+        
 
         public void AddVaccination(Vaccination vaccination)
         {

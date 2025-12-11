@@ -80,9 +80,11 @@ namespace RefugeConsole.CouchePresentation.ViewModel
 
                 Animal updatedAnimalInfo = AnimalView.UpdateAnimal(animalInfo);
 
-                Debug.WriteLine($"Animal info to update : \n{updatedAnimalInfo}");
+                //Debug.WriteLine($"Animal info to update : \n{updatedAnimalInfo}");
 
                 Animal updatedAnimal = animalDataService.UpdateAnimal(updatedAnimalInfo);
+
+                this.AddCompatibilities(updatedAnimal);
 
                 AnimalView.DisplayAnimal(updatedAnimal);
 

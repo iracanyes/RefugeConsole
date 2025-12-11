@@ -25,10 +25,10 @@ namespace RefugeConsole.ClassesMetiers.Config
             /*-- Primary keys are defined in the model ----*/
 
             /* Index and Unicity constraints */
-            modelBuilder.Entity<ContactInfo>()
+            modelBuilder.Entity<Contact>()
                 .HasIndex(ci => ci.RegistryNumber)
                 .IsUnique();
-            modelBuilder.Entity<ContactInfo>()
+            modelBuilder.Entity<Contact>()
                 .HasIndex(ci => ci.Email)
                 .IsUnique();
 
@@ -60,7 +60,7 @@ namespace RefugeConsole.ClassesMetiers.Config
             modelBuilder.Entity<Volunteer>().ToTable("Volunteers");
             modelBuilder.Entity<FosterFamily>().ToTable("FosterFamilies");
             modelBuilder.Entity<Candidate>().ToTable("Candidates");
-            modelBuilder.Entity<Adopter>().ToTable("Adopters");
+            modelBuilder.Entity<Adoption>().ToTable("Adopters");
 
 
             /*- Other constraints -*/
@@ -72,13 +72,13 @@ namespace RefugeConsole.ClassesMetiers.Config
 
         }
 
-        public DbSet<ContactInfo> ContactInfos { get; set; }
+        public DbSet<Contact> ContactInfos { get; set; }
         public DbSet<Contact> Contacts { get; set; }
         public DbSet<Volunteer> Volunteers { get; set; }
         public DbSet<OtherContact> OtherContacts { get; set; }
         public DbSet<Candidate> Candidates { get; set; }
         public DbSet<FosterFamily> FosterFamilies { get; set; }
-        public DbSet<Adopter> Adopters { get; set; }
+        public DbSet<Adoption> Adopters { get; set; }
         public DbSet<Admission> Admissions { get; set; }
         public DbSet<Release> Releases { get; set; }
         public DbSet<Animal> Animals { get; set; }

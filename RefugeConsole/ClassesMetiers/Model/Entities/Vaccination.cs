@@ -8,13 +8,9 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
     internal class Vaccination
     {
         // Constructor used by EntityFramework
-        public Vaccination(Guid id, DateOnly dateVaccination, bool done)
-        {
-
-            this.Id = id;
-            this.DateVaccination = dateVaccination;
-            this.Done = done;
-        }
+        public Vaccination(DateOnly dateVaccination, bool done, Animal animal, Vaccine vaccin)
+            : this(Guid.NewGuid(), dateVaccination, done, animal, vaccin)
+        { }
 
         public Vaccination(Guid id, DateOnly dateVaccination, bool done, Animal animal, Vaccine vaccin) {
             ArgumentNullException.ThrowIfNull(animal, nameof(animal));

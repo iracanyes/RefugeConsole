@@ -172,25 +172,25 @@ namespace RefugeConsole.CouchePresentation.View
         public static List<Compatibility> AddCompatibility(Animal animal)
         {
             List<Compatibility> result = [];
-            bool add = false;
+            bool addNext = false;
 
             do
             {
-                add = SharedView.InputBoolean($"Voulez-vous ajouter une nouvelle compatibilité pour {animal.Name} ? (Oui/Non)");
+                addNext = SharedView.InputBoolean($"Voulez-vous ajouter une nouvelle compatibilité pour {animal.Name} ? (Oui/Non)");
 
-                if (add)
+                if (addNext)
                 {
                     string type = SharedView.InputString("Quel est le type de compatibilité? (Chat, Chien, Jeune enfant, Enfant, Jardin, Poney)");
-                    string value = SharedView.InputString("Quel est sa valeur?");
+                    CompatibilityValueType value = SharedView.EnumChoice<CompatibilityValueType>("Quel est sa valeur?");
                     string description = SharedView.InputMultipleLines("Décrivez cette compatibilité?");
 
-                    Compatibility compatibility = new Compatibility(type, value, description, animal);
+                    Compatibility compatibility = new Compatibility(type, MyEnumHelper.GetEnumDescription(value), description, animal);
 
                     animal.AddCompatibility(compatibility);
                     result.Add(compatibility);
 
                 }
-            } while (add);
+            } while (addNext);
 
 
             return result;

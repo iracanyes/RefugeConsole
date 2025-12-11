@@ -299,14 +299,14 @@ namespace RefugeConsole.CoucheAccesDB
                 sqlCmd = new NpgsqlCommand(
                     $"""
                     INSERT INTO public."Compatibilities" ("Id", "Type", "Value", "Description", "AnimalId")
-                    VALUES (:id, :name, :type, :value, :description, :animalId)
+                    VALUES (:id, :type, :value, :description, :animalId)
 
                     """,
                     this.SqlConn
                 );
 
                 sqlCmd.Parameters.Add(new NpgsqlParameter("id", NpgsqlTypes.NpgsqlDbType.Uuid));
-                sqlCmd.Parameters.Add(new NpgsqlParameter("name", NpgsqlTypes.NpgsqlDbType.Text));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("type", NpgsqlTypes.NpgsqlDbType.Text));
                 sqlCmd.Parameters.Add(new NpgsqlParameter("value", NpgsqlTypes.NpgsqlDbType.Text));
                 sqlCmd.Parameters.Add(new NpgsqlParameter("description", NpgsqlTypes.NpgsqlDbType.Text));
                 sqlCmd.Parameters.Add(new NpgsqlParameter("animalId", NpgsqlTypes.NpgsqlDbType.Text));
