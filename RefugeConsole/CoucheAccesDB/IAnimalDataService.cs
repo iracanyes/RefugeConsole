@@ -1,4 +1,5 @@
-﻿using RefugeConsole.ClassesMetiers.Model.Entities;
+﻿using Npgsql;
+using RefugeConsole.ClassesMetiers.Model.Entities;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -15,8 +16,10 @@ namespace RefugeConsole.CoucheAccesDB
 
         bool RemoveAnimal(Animal animal);
 
-        bool CreateCompatibility(Compatibility compatibility);
+        bool CreateCompatibility(Compatibility compatibility, NpgsqlTransaction transaction);
 
-        
+        bool CreateAnimalCompatibility(AnimalCompatibility animalCompatibility);
+
+        HashSet<Compatibility> GetCompatibilities();
     }
 }

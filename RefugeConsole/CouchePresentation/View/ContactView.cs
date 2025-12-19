@@ -6,6 +6,9 @@ using RefugeConsole.CoucheAccesDB;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
+using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace RefugeConsole.CouchePresentation.View
@@ -14,13 +17,45 @@ namespace RefugeConsole.CouchePresentation.View
     {
         private static readonly ILogger MyLogger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger(nameof(ContactView));
 
+        public static Address AddAddress()
+        {
+            Address? address = null;
+
+            Console.WriteLine("Ajouter une addresse (rue, ville, province/état/département, code postal, pays");
+
+            string street = SharedView.InputString("Entrez votre rue : ");
+            string city = SharedView.InputString("Entrez votre ville : ");
+            string state = SharedView.InputString("Entrez votre province : ");
+            string zipCode = SharedView.InputString("Entrez votre code postal : ");
+            string country = SharedView.InputString("Entrez votre pays de résidence : ");
+
+            try
+            {
+                address = new Address(street, city, state, zipCode, country);
+            }
+            catch (Exception ex)
+            {
+                if (Debugger.IsAttached)
+                {
+                    Debug.WriteLine($"Unable to accept input for an address instance with the following data :\n street = {street}, city = {city}, state = {state}, zipCode = {zipCode}, country = {country}.\nException message : {ex.Message}\nException : {ex}");
+                }
+
+                throw new Exception($"Unable to accept input for an address instance with the following data :\n street = {street}, city = {city}, state = {state}, zipCode = {zipCode}, country = {country}.\nException message : {ex.Message}\nException : {ex}");
+            }
+
+            return address;
+
+        }
+
+        
+
         public static Contact AddContactInfo()
         {
             Contact? contactInfo = null;
 
             Console.Clear();
 
-            Console.WriteLine("Ajouter une personne de contact: (type de contact, nom, prenom, numéro de registre national, adresse, email, numéro de téléphone, numéro de portable)");
+            Console.WriteLine("Ajouter une personne de contact: (type de contact, nom, prenom, numéro de registre national, email, numéro de téléphone, numéro de portable, adresse)");
             // Get contact type
 
             
@@ -28,14 +63,15 @@ namespace RefugeConsole.CouchePresentation.View
             string? lastname = SharedView.InputString("Entrez votre nom : ");
 
             string registryNumber = SharedView.InputString("Entrez votre numéro de registre national : ");
-            string address = SharedView.InputString("Entrez votre adresse : ");
             string email = SharedView.InputString("Entrez votre email : ");
             string mobileNumber = SharedView.InputString("Entrez votre numéro de portable : ");
             string phoneNumber = SharedView.InputString("Entrez votre numéro de téléphone fixe : ");
-
+            Address address = ContactView.AddAddress();
             try
             {
-               contactInfo = new Contact(Guid.NewGuid(), firstname, lastname, registryNumber, address, email, phoneNumber, mobileNumber);
+               
+
+               contactInfo = new Contact(Guid.NewGuid(), firstname, lastname, registryNumber, email, phoneNumber, mobileNumber, address);
                 
             }
             catch (Exception ex)
@@ -56,15 +92,15 @@ namespace RefugeConsole.CouchePresentation.View
                 $"""
                 
                 ============================================
-                ContactInfo ID : {contactInfo.Id}
+                Contact ID : {contactInfo.Id}
                 ============================================
                 firstname = {contactInfo.Firstname}
                 lastname = {contactInfo.Lastname}
-                registryNumber = {contactInfo.RegistryNumber}
-                address = {contactInfo.Address}
+                registryNumber = {contactInfo.RegistryNumber}                
                 email = {contactInfo.Email}
                 phoneNumber = {contactInfo.PhoneNumber}
                 mobileNumber = {contactInfo.MobileNumber}
+                address = {contactInfo.Address}
                 ==============================================
                 """
                     
@@ -84,14 +120,39 @@ namespace RefugeConsole.CouchePresentation.View
             string? lastname = SharedView.InputString($"Entrez votre nom : (Actuel = {contactInfo.Lastname})");
 
             string registryNumber = SharedView.InputString($"Entrez votre numéro de registre national : (Actuel = {contactInfo.RegistryNumber})");
-            string address = SharedView.InputString($"Entrez votre adresse : (Actuel = {contactInfo.Address})");
             string email = SharedView.InputString($"Entrez votre email : (Actuel = {contactInfo.Email})");
             string mobileNumber = SharedView.InputString($"Entrez votre numéro de portable : (Actuel = {contactInfo.MobileNumber})");
             string phoneNumber = SharedView.InputString($"Entrez votre numéro de téléphone fixe : (Actuel = {contactInfo.PhoneNumber})");
 
+            // Update the address 
+            bool updateAddress = SharedView.InputBoolean($"?Voulez-vous mettre à jour votre addresse ? (Oui/Non) \n Données actuelle : {contactInfo.Address}");
+            Address? updatedAddress = null;
+
+            if (updateAddress) {
+                Console.WriteLine("Mettre à jour votre addresse : ");
+
+                string street = SharedView.InputString($"Entrez votre rue : ({contactInfo.Address.Street})");
+                string city = SharedView.InputString($"Entrez votre ville : ({contactInfo.Address.City})");
+                string state = SharedView.InputString($"Entrez votre province : ({contactInfo.Address.State})");
+                string zipCode = SharedView.InputString($"Entrez votre code postal : ({contactInfo.Address.ZipCode})");
+                string country = SharedView.InputString($"Entrez votre pays de résidence : ({contactInfo.Address.Country})");
+                updatedAddress = new Address(contactInfo.Address.Id, street, city, state, zipCode, country);
+            }
+
             try
             {
-                result = new Contact(contactInfo.Id, firstname, lastname, registryNumber, address, email, phoneNumber, mobileNumber);
+
+                
+                result = new Contact(
+                    contactInfo.Id, 
+                    firstname, 
+                    lastname, 
+                    registryNumber, 
+                    email, 
+                    phoneNumber, 
+                    mobileNumber, 
+                    updateAddress ? updatedAddress! : contactInfo.Address
+                );
 
             }
             catch (Exception ex)

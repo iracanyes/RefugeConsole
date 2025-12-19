@@ -46,7 +46,7 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
         public override string ToString()
         {
             return string.Format(
-                "AnimalCompatibility{{ id = {0}, value = {2}, description = {3}, compatibility = {4}, animal = {5},  }}",
+                "AnimalCompatibility{{ id = {0}, value = {1}, description = {2}, compatibility = {3}, animal = {4}  }}",
                 this.Id,
                 this.Value,
                 this.Description,

@@ -2,6 +2,7 @@
 using RefugeConsole.ClassesMetiers.Helper;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 namespace RefugeConsole.CouchePresentation.View
@@ -187,6 +188,50 @@ namespace RefugeConsole.CouchePresentation.View
 
             return result;
 
+        }
+
+        public static T ChoiceInList<T>(string label, List<T> list) {
+            T? result = default(T);
+            bool correct = false;
+
+            try
+            {
+                // Show the question label
+                Console.WriteLine(label);
+
+                do
+                {
+                    
+                    for (int i = 0; i < list.Count; i++)
+                    {
+                        Console.WriteLine($"[{i}] {list[i]}");
+                    }
+                    int choice = Convert.ToInt32(Console.ReadLine());
+
+                    if(choice >= 0 && choice <= list.Count - 1)
+                    {
+                        correct = true;
+                        result = list[choice];
+                        Console.WriteLine($"Votre choix : {choice}");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Réponse incorrecte!");
+                    }                        
+
+                    
+                } while (!correct);
+            }
+            catch (Exception ex)
+            {
+                if (Debugger.IsAttached)
+                    Debug.WriteLine($"Unable to select in list .\nList : {list}\nException message : {ex.Message}.\nException : {ex}.");
+                throw new Exception($"Unable to select in list .\nList : {list}\nException message : {ex.Message}.\nException : {ex}.");
+            }
+
+            if (result == null) throw new Exception($"Unable to select a value in the list. \nData : {list}");
+
+            return result;
         }
 
         /**

@@ -50,7 +50,7 @@ namespace RefugeConsole.ClassesMetiers.Config
                 .HasValue<FosterFamily>(MyEnumHelper.GetEnumDescription(ContactType.FosterFamily))
                 .HasValue<Candidate>(MyEnumHelper.GetEnumDescription(ContactType.Candidate))
                 .HasValue<Adopter>(MyEnumHelper.GetEnumDescription(ContactType.Adopter));
-            */
+            
 
             // Create table for each type
             modelBuilder.Entity<Contact>()
@@ -61,22 +61,20 @@ namespace RefugeConsole.ClassesMetiers.Config
             modelBuilder.Entity<FosterFamily>().ToTable("FosterFamilies");
             modelBuilder.Entity<Candidate>().ToTable("Candidates");
             modelBuilder.Entity<Adoption>().ToTable("Adopters");
-
+            */
 
             /*- Other constraints -*/
             modelBuilder.Entity<Animal>()
                 .Property("Id")
                 .HasMaxLength(11);
+            
 
 
 
         }
 
-        public DbSet<Contact> ContactInfos { get; set; }
+        
         public DbSet<Contact> Contacts { get; set; }
-        public DbSet<Volunteer> Volunteers { get; set; }
-        public DbSet<OtherContact> OtherContacts { get; set; }
-        public DbSet<Candidate> Candidates { get; set; }
         public DbSet<FosterFamily> FosterFamilies { get; set; }
         public DbSet<Adoption> Adopters { get; set; }
         public DbSet<Admission> Admissions { get; set; }

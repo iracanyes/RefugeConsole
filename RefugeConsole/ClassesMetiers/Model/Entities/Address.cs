@@ -15,7 +15,7 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
             this.Street = street;
             this.City = city;
             this.State = state;
-            this.PostalCode = zipCode;
+            this.ZipCode = zipCode;
             this.Country = country;
         }
 
@@ -29,7 +29,7 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
         [Required]
         public string State { get; set; }
         [Required]
-        public string PostalCode { get; set; }
+        public string ZipCode { get; set; }
         [Required]
         public string Country { get; set; }
     }

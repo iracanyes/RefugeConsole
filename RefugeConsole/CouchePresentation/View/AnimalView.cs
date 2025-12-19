@@ -113,6 +113,9 @@ namespace RefugeConsole.CouchePresentation.View
 
 
             string name = SharedView.InputString($"Entrez le nom de l'animal: (Actuel = {animal.Name})");
+
+
+
             AnimalType type = SharedView.EnumChoice<AnimalType>($"Entrez le type de l'animal (chat, chien) : (Actuel = {animal.Type})");
             GenderType gender = SharedView.EnumChoice<GenderType>($"Entrez le sexe de l'animal : (Actuel = {animal.Gender})");
             string color = SharedView.InputString($"Entrez la couleur de l'animal : (Actuel = {animal.Color})");
@@ -157,11 +160,13 @@ namespace RefugeConsole.CouchePresentation.View
                     description
                 );
 
+                
+
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error while updating an animal. \nReason : {ex.Message} ");
-                Debug.WriteLine($"Exception: {ex}");
+                Debug.WriteLine($"Error while updating an animal. \nReason : {ex.Message}.\nException : {ex} ");
+                Console.WriteLine($"Error while updating an animal. \nReason : {ex.Message}.\nException : {ex} ");
             }
 
             if (result == null) throw new Exception("Unknown error while updating an animal.");
@@ -169,31 +174,60 @@ namespace RefugeConsole.CouchePresentation.View
             return result!;
         }
 
-        public static List<Compatibility> AddCompatibility(Animal animal)
+        public static void AddAnimalCompatibilities(Animal animal, HashSet<Compatibility> compatibilities)
         {
-            List<Compatibility> result = [];
+            
             bool addNext = false;
+            List<string> compatiblitiesNames = compatibilities.Select(p => p.Type).ToList();
+            List<string> alreadySelected = new List<string>();
 
-            do
+
+            try
             {
-                addNext = SharedView.InputBoolean($"Voulez-vous ajouter une nouvelle compatibilité pour {animal.Name} ? (Oui/Non)");
-
-                if (addNext)
+                do
                 {
-                    string type = SharedView.InputString("Quel est le type de compatibilité? (Chat, Chien, Jeune enfant, Enfant, Jardin, Poney)");
-                    CompatibilityValueType value = SharedView.EnumChoice<CompatibilityValueType>("Quel est sa valeur?");
-                    string description = SharedView.InputMultipleLines("Décrivez cette compatibilité?");
+                    addNext = SharedView.InputBoolean($"Voulez-vous ajouter une nouvelle compatibilité pour {animal.Name} ? (Oui/Non)");
 
-                    Compatibility compatibility = new Compatibility(type, MyEnumHelper.GetEnumDescription(value), description, animal);
+                    if (addNext)
+                    {
 
-                    animal.AddCompatibility(compatibility);
-                    result.Add(compatibility);
+                        string type = SharedView.ChoiceInList<string>("Quel est le type de compatibilité?", compatiblitiesNames);
 
-                }
-            } while (addNext);
+                        // If already selected type, skip 
+                        if (alreadySelected.Contains(type))
+                        {
+                            Console.WriteLine("Vous avez déjà entrée des données pour cette compatibilité!");
+                            continue;
+                        }
 
+                        Compatibility compatibility = compatibilities.First(c => c.Type == type);
+                        CompatibilityValueType value = SharedView.EnumChoice<CompatibilityValueType>("Quel est sa valeur?");
 
-            return result;
+                        // If already selected type, skip 
+                        if (value == CompatibilityValueType.Unknown)
+                        {
+                            Console.WriteLine("Vous avez entrée une valeur incorrecte pour cette compatibilité!");
+                            continue;
+                        }
+
+                        string description = SharedView.InputMultipleLines("Décrivez cette compatibilité?");
+
+                        AnimalCompatibility animalCompatibility = new AnimalCompatibility(MyEnumHelper.GetEnumDescription(value), description, animal, compatibility);
+
+                        animal.AddAnimalCompatibility(animalCompatibility);
+
+                        // Add the compatibility type to already selected list
+                        alreadySelected.Add(type);
+
+                    }
+                } while (addNext);
+            }
+            catch (Exception ex)
+            {
+                if (Debugger.IsAttached)
+                    Debug.WriteLine($"Unable to get user input for animal compatibilities. Error message : {ex.Message}.\nException : {ex}");
+                throw new Exception($"Unable to get user input for animal compatibilities. Error message : {ex.Message}.\nException : {ex}");
+            }
         }
     }
 }

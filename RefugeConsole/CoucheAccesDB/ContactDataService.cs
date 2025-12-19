@@ -6,42 +6,142 @@ using System;
 using System.Collections.Generic;
 using System.Data.SqlTypes;
 using System.Diagnostics;
+using System.Net;
 using System.Text;
 
 namespace RefugeConsole.CoucheAccesDB
 {
-    internal class ContactDataService : IContactDataService
+    internal class ContactDataService : AccessDb, IContactDataService
     {
         private static readonly ILogger MyLogger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger(nameof(AnimalDataService));
-        private readonly NpgsqlConnection SqlConn;
         public ContactDataService()
-        {
-            try
-            {
-                SqlConn = new NpgsqlConnection(Environment.GetEnvironmentVariable("REFUGE_DB_CONNECTION_STRING"));
-                SqlConn.Open();
+            : base()
+        { }
 
-            }
-            catch (Exception ex)
-            {
-                MyLogger.LogError("Error while connecting to database. Reason : {0}", ex.Message);
-                throw new AccessDbException(ex.Message, "Error while connecting to database");
-            }
-        }
-
-        public Contact CreateContact(Contact contact)
+        public bool CreateAddress(Address address, NpgsqlTransaction transaction)
         {
-            Contact? result = null;
+            bool result = false;
             NpgsqlCommand? sqlCmd = null;
 
             try
             {
                 sqlCmd = new NpgsqlCommand(
-                    $"""
+                    """"
+                    INSERT INTO public."Addresses" ("Id", "Street", "City", "State", "ZipCode", "Country")
+                    VALUES (:id, :street, :city, :state, :zipCode, :country)
+                    """",
+                    this.SqlConn
+
+                );
+
+                sqlCmd.Transaction = transaction;
+
+                sqlCmd.Parameters.Add(new NpgsqlParameter("id", NpgsqlTypes.NpgsqlDbType.Uuid));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("street", NpgsqlTypes.NpgsqlDbType.Text));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("city", NpgsqlTypes.NpgsqlDbType.Text));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("state", NpgsqlTypes.NpgsqlDbType.Text));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("zipCode", NpgsqlTypes.NpgsqlDbType.Text));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("country", NpgsqlTypes.NpgsqlDbType.Text));
+
+                sqlCmd.Prepare();
+
+                sqlCmd.Parameters["id"].Value = address.Id;
+                sqlCmd.Parameters["street"].Value = address.Street;
+                sqlCmd.Parameters["city"].Value = address.City;
+                sqlCmd.Parameters["state"].Value = address.State;
+                sqlCmd.Parameters["zipCode"].Value = address.ZipCode;
+                sqlCmd.Parameters["country"].Value = address.Country;
+
+                int nbRowAffected = sqlCmd.ExecuteNonQuery();
+
+                if (nbRowAffected == 0) throw new AccessDbException(sqlCmd.CommandText, $"Unable to create an address instance. Object : \n{address}");
+
+                result = true;
+
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+
+            return result;
+        }
+
+        public bool CreateContactRole(ContactRole contactRole, NpgsqlTransaction transaction)
+        {
+            bool result = false;
+            NpgsqlCommand? sqlCmd = null;
+
+            try
+            {
+                sqlCmd = new NpgsqlCommand(
+                    """
+                    INSERT INTO public."ContactRoles" ("Id", "ContactId", "RoleId")
+                    VALUES (:id, :contactId, :roleId)
+                    """,
+                    this.SqlConn,
+                    transaction
+                );
+
+                sqlCmd.Parameters.Add(new NpgsqlParameter("id", NpgsqlTypes.NpgsqlDbType.Uuid));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("contactId", NpgsqlTypes.NpgsqlDbType.Uuid));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("roleId", NpgsqlTypes.NpgsqlDbType.Uuid));
+
+
+                sqlCmd.Prepare();
+
+                sqlCmd.Parameters["id"].Value = contactRole.Id;
+                sqlCmd.Parameters["contactId"].Value = contactRole.ContactId;
+                sqlCmd.Parameters["roleId"].Value = contactRole.RoleId;
+
+                int nbRowAffected = sqlCmd.ExecuteNonQuery();
+
+                if (nbRowAffected == 0) throw new Exception($"Unable to create an ContactRole instance with data : {contactRole}.");
+
+                result = true;
+
+            }
+            catch (Exception ex)
+            {
+                if(transaction != null)
+                    transaction.Rollback();
+
+                if (Debugger.IsAttached)
+                    Debug.WriteLine($"Unable to create a ContactRole instance. \nMessage :\n {ex.Message}.\nException :\n{ex}");
+                
+                if (sqlCmd != null)
+                    throw new AccessDbException(sqlCmd.CommandText, $"Unable to create a ContactRole instance. \nMessage :\n {ex.Message}.\nException :\n{ex}");
+                else
+                    throw new AccessDbException("Unable to create an sqlCommand for inserting a ContactRole instance", $"Unable to insert a ContactRole instance. \nMessage :\n {ex.Message}.\nException :\n{ex}");
+            }
+
+            return result;
+            
+        }
+        
+        public Contact CreateContact(Contact contact)
+        {
+            Contact? result = null;
+            NpgsqlCommand? sqlCmd = null;
+            NpgsqlTransaction transaction = this.SqlConn.BeginTransaction();
+
+            try
+            {
+                // Insert the address 
+                bool addressCreated = this.CreateAddress(contact.Address, transaction);
+                // Throw an exception in case nothing happen!
+                if (!addressCreated) throw new AccessDbException("Unable to create an address instance", $"Error while creating an address instance with object : {contact.Address}");
+
+                               
+
+                sqlCmd = new NpgsqlCommand(
+                    """
                     INSERT INTO public."Contacts" ("Id", "Firstname", "Lastname", "RegistryNumber", "Email", "PhoneNumber", "MobileNumber", "AddressId")
                     VALUES (:id, :firstname, :lastname, :registryNumber, :email, :phoneNumber, :mobileNumber, :addressId)
                     """,
-                    this.SqlConn
+                    this.SqlConn,
+                    transaction
                 );
 
                 sqlCmd.Parameters.Add(new NpgsqlParameter("id", NpgsqlTypes.NpgsqlDbType.Uuid));
@@ -68,12 +168,29 @@ namespace RefugeConsole.CoucheAccesDB
 
                 if(nbRowAffected == 0) throw new AccessDbException(sqlCmd.CommandText, $"Unable to create a Contact instance in DB!\nObject:\n{contact}");
 
+                // Insert all roles for the contact
+                foreach (ContactRole contactRole in contact.ContactRoles)
+                {
+                    bool contactRoleCreated = this.CreateContactRole(contactRole, transaction);
+
+                    if (!contactRoleCreated) throw new Exception($"Unable to create a ContactRole instance with data : {contactRole}.");
+                }
+
                 result = this.GetContactByRegistryNumber(contact.RegistryNumber);
             }
             catch (Exception ex)
             {
+                if(Debugger.IsAttached)
+                    Debug.WriteLine($"Unable to create a contact info instance.\nObject : \n{contact}\nReason : \n{ex.Message}\nException : \n{ex}");
+                
+                if(transaction != null) transaction.Rollback();
 
-                Debug.WriteLine($"Unable to create a contact info instance.\nObject : \n{contact}\nReason : \n{ex.Message}\nException : \n{ex}");
+                if (sqlCmd != null)
+                    throw new AccessDbException(sqlCmd.CommandText, $"Unable to update a Contact instance. Object : {contact}.");
+                else
+                    throw new AccessDbException("SqlCommand is null", $"Unable to update a Contact instance. Object : {contact}.");
+
+
             }
 
             if (result == null) throw new Exception($"Unable to create a contact info instance.\nObject : \n{contact}");
@@ -164,15 +281,80 @@ namespace RefugeConsole.CoucheAccesDB
             return result;
         }
 
-        public Contact UpdateContact(Contact contact) {
-            Contact? result = null;
+        public bool UpdateAddress(Address address, NpgsqlTransaction transaction)
+        {
+            bool result = false;
             NpgsqlCommand? sqlCmd = null;
 
             try
             {
                 sqlCmd = new NpgsqlCommand(
+                    """
+                    UPDATE public."Addresses"
+                    SET "Street" = :street,
+                        "City" = :city,
+                        "State" = :state,
+                        "ZipCode" = :zipCode,
+                        "Country" = :country
+                    WHERE "Id" = :id
+                    """,
+                    this.SqlConn,
+                    transaction
+                );
+
+                sqlCmd.Parameters.Add(new NpgsqlParameter("id", NpgsqlTypes.NpgsqlDbType.Uuid));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("street", NpgsqlTypes.NpgsqlDbType.Text));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("city", NpgsqlTypes.NpgsqlDbType.Text));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("state", NpgsqlTypes.NpgsqlDbType.Text));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("zipCode", NpgsqlTypes.NpgsqlDbType.Text));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("country", NpgsqlTypes.NpgsqlDbType.Text));
+
+                sqlCmd.Prepare();
+
+                sqlCmd.Parameters["id"].Value = address.Id;
+                sqlCmd.Parameters["street"].Value = address.Street;
+                sqlCmd.Parameters["city"].Value = address.Country;
+                sqlCmd.Parameters["state"].Value = address.State;
+                sqlCmd.Parameters["zipCode"].Value = address.ZipCode;
+                sqlCmd.Parameters["country"].Value = address.Country;
+
+
+                int nbRowAffected = sqlCmd.ExecuteNonQuery();
+
+                if (nbRowAffected == 0) throw new AccessDbException(sqlCmd.CommandText, $"Unable to update an address instance with info : {address}.");
+
+                result = true;
+
+
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Unable to update an address instance. Object : {address}. Exception message: {ex.Message}.\nException : {ex}");
+                if (sqlCmd != null)
+                    throw new AccessDbException(sqlCmd.CommandText, $"Unable to update an address instance. Object : {address}.");
+                else
+                    throw new AccessDbException("SqlCommand is null", $"Unable to update an address instance. Object : {address}.");
+            }
+
+
+            return result;
+        }
+
+        public Contact UpdateContact(Contact contact) {
+            Contact? result = null;
+            NpgsqlCommand? sqlCmd = null;
+            NpgsqlTransaction transaction = this.SqlConn.BeginTransaction();
+
+            try
+            {
+                // First, update the address
+                bool addressUpdated = this.UpdateAddress(contact.Address, transaction);
+
+                if (!addressUpdated) throw new AccessDbException("sqlCmd - updateAddress", $"Unexpected error while updating the address with info {contact.Address}."); 
+
+                sqlCmd = new NpgsqlCommand(
                     $"""
-                    UPDATE public."Contacts" cin
+                    UPDATE public."Contacts" c
                     SET "Firstname" = :firstname,
                         "Lastname" = :lastname,
                         "RegistryNumber" = :registryNumber,
@@ -183,7 +365,8 @@ namespace RefugeConsole.CoucheAccesDB
                         "AddressId" = :addressId
                     WHERE "Id" = :id
                     """,
-                    this.SqlConn
+                    this.SqlConn,
+                    transaction
                 );
 
                 sqlCmd.Parameters.Add(new NpgsqlParameter("id", NpgsqlTypes.NpgsqlDbType.Uuid));
@@ -273,7 +456,6 @@ namespace RefugeConsole.CoucheAccesDB
 
             return result;
         }
-
         
 
         public Contact GetContactById(Guid id)
@@ -356,6 +538,51 @@ namespace RefugeConsole.CoucheAccesDB
             return result;
 
         }
+
+        public HashSet<Role> GetRoles()
+        {
+            HashSet<Role> roles = new HashSet<Role>();
+            NpgsqlCommand? sqlCmd = null;
+            NpgsqlDataReader? reader = null;
+
+            try
+            {
+                sqlCmd = new NpgsqlCommand(
+                    """
+                    SELECT *
+                    FROM public."Roles"
+                    """,
+                    this.SqlConn
+                );
+
+                sqlCmd.Prepare();
+
+                reader = sqlCmd.ExecuteReader();
+
+                if (reader.Read())
+                {
+                    roles.Add(new Role(
+                       new Guid(Convert.ToString(reader["Id"])!),
+                       Convert.ToString(reader["Name"])!
+                    ));
+                }
+
+                reader.Close();
+
+            }
+            catch (Exception)
+            {
+                if (reader != null) reader.Close();
+
+
+                throw;
+            }
+
+            return roles;
+
+        }
+
+
 
     }
 }

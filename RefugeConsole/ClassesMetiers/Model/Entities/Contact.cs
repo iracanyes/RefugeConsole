@@ -37,9 +37,28 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
         [Key]
         public Guid Id { get; private set; }
         [Required]
-        public string Firstname { get; set; }
+        public string Firstname { 
+            get;
+            set {
+                if (value.Length < 2)
+                    throw new ArgumentException("Le nom doit avoir une longueur d'au moins 2 caractères!");
+                field = value;
+            } 
+        }
+
         [Required]
-        public string Lastname { get; set; }
+        public string Lastname
+        {
+            get;
+            set
+            {
+                if (value.Length < 2)
+                    throw new ArgumentException("Le nom doit avoir une longueur d'au moins 2 caractères!");
+                // Set the value on the backed properties
+                field = value;
+            }
+        }
+
         [Required]
         public string RegistryNumber { get; set; }
         
@@ -56,7 +75,7 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
         public Guid AddressId { get; set; }
         public Address Address { get; set; }
 
-        public HashSet<Role> Roles { get; } = new HashSet<Role>();
+        public HashSet<ContactRole> ContactRoles { get; } = new HashSet<ContactRole>();
 
         public HashSet<Admission> Admissions { get; } = new HashSet<Admission>();
 
@@ -67,26 +86,26 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
         public HashSet<FosterFamily> FosterFamilies { get; } = new HashSet<FosterFamily>();
 
         /*================ Méthodes d'instance =========================================*/
-        public void AddRole(Role role) { 
-            ArgumentNullException.ThrowIfNull(role, nameof(role));
+        public void AddContactRole(ContactRole contactRole) { 
+            ArgumentNullException.ThrowIfNull(contactRole, nameof(contactRole));
             try
             {
-                this.Roles.Add(role);
+                this.ContactRoles.Add(contactRole);
             }
             catch (ArgumentException ex) {
-                MyLogger.LogError("Unable to add the following role : " + role.ToString() + "\nThe reason :" + ex.Message);
+                MyLogger.LogError("Unable to add the following contactRole : " + contactRole.ToString() + "\nThe reason :" + ex.Message);
             }
             
         }
 
-        public void RemoveRole(Role role)
+        public void RemoveContactRole(ContactRole contactRole)
         {
             try
             {
-                this.Roles.Remove(role);
+                this.ContactRoles.Remove(contactRole);
             }
             catch (ArgumentException ex) {
-                MyLogger.LogError("Unable to remove the following role : " + role.ToString() + "\nThe reason :" + ex.Message);
+                MyLogger.LogError("Unable to remove the following contactRole : " + contactRole.ToString() + "\nThe reason :" + ex.Message);
             }
         }
 

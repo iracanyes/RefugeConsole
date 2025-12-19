@@ -11,24 +11,19 @@ using System.Text;
 
 namespace RefugeConsole.CoucheAccesDB
 {
-    internal class AnimalDataService : IAnimalDataService
+    internal class AnimalDataService : AccessDb, IAnimalDataService
     {
         private static readonly ILogger MyLogger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger(nameof(AnimalDataService));
-        private readonly NpgsqlConnection SqlConn;
+        
 
         public AnimalDataService()
-        {
-            try
-            {
-                SqlConn = new NpgsqlConnection(Environment.GetEnvironmentVariable("REFUGE_DB_CONNECTION_STRING"));
-                SqlConn.Open();
+            : base() { }
+        
 
-            }
-            catch (Exception ex) {
-                MyLogger.LogError("Error while connecting to database. Reason : {0}", ex.Message);
-                throw new AccessDbException(ex.Message, "Error while connecting to database");
-            }
-        }
+
+        /**
+         * Create an animal record in database
+         */ 
         public Animal CreateAnimal(Animal animal)
         {
             Animal? result = null;
@@ -94,9 +89,51 @@ namespace RefugeConsole.CoucheAccesDB
             return result;
         }
 
-        public Animal CreateCompatibility(Animal animal, Compatibility compatibility)
+        public bool AnimalNameExists(string name)
         {
-            throw new NotImplementedException();
+            bool result = false;
+            NpgsqlCommand? sqlCmd = null;
+            NpgsqlDataReader? reader = null;
+
+            try
+            {
+                sqlCmd = new NpgsqlCommand(
+                    """
+                    SELECT exists (
+                        SELECT 1
+                        FROM public."Animals"
+                        WHERE "Name" = :name
+                        LIMIT 1
+                    );
+                    """,
+                    this.SqlConn
+                );
+
+                sqlCmd.Parameters.Add(new NpgsqlParameter("name", NpgsqlTypes.NpgsqlDbType.Text));
+
+                sqlCmd.Prepare();
+
+                sqlCmd.Parameters["name"].Value = name;
+
+
+                reader = sqlCmd.ExecuteReader();
+
+                if (reader.Read())
+                {
+                    result = Convert.ToBoolean(reader["exists"]);
+                }
+
+                reader.Close();
+                
+            }
+            catch (Exception ex)
+            {
+                if(Debugger.IsAttached)
+                    Debug.WriteLine($"Error while checking if animal named '{name}' already exists in DB. Error : {ex.Message}\nException : {ex}");
+                throw;
+            }
+
+            return result;
         }
 
         public Animal? GetAnimal(string name)
@@ -130,13 +167,6 @@ namespace RefugeConsole.CoucheAccesDB
                     DateOnly? birthDate = reader["BirthDate"] != DBNull.Value ? (DateOnly) reader["BirthDate"] : null; 
                     DateOnly? deathDate = reader["DeathDate"] != DBNull.Value ? (DateOnly) reader["DeathDate"] : null;
                     DateOnly? dateSterilization = reader["dateSterilization"] != DBNull.Value ? (DateOnly)  reader["dateSterilization"] : null;
-
-                    //bool birthDateCorrect = DateOnly.TryParse((string) reader["BirthDate"], out birthDate);                    
-
-
-                    //bool deathDateCorrect = DateOnly.TryParse((string) reader["DeathDate"], out deathDate);
-
-                    //bool dateSterilizationCorrect = DateOnly.TryParse((string) reader["dateSterilization"], out dateSterilization);
                     
 
                     result = new Animal(
@@ -154,8 +184,10 @@ namespace RefugeConsole.CoucheAccesDB
 
                     );
 
-                    reader.Close();
+                    
                 }
+
+                reader.Close();
             }
             catch (Exception ex)
             {
@@ -288,8 +320,49 @@ namespace RefugeConsole.CoucheAccesDB
             return result!;
         }
 
+        public bool CreateCompatibility(Compatibility compatibility, NpgsqlTransaction? transaction = null) {
+            bool result = false;
+            NpgsqlCommand? sqlCmd = null;
 
-        public bool CreateCompatibility(Compatibility compatibility)
+            try
+            {
+                sqlCmd = new NpgsqlCommand(
+                     """
+                     INSERT INTO public."Compatibilities" ("Id", "Type")
+                     VALUES (:id, :type)
+                     """,
+                     this.SqlConn,
+                     transaction
+                );
+
+                sqlCmd.Parameters.Add(new NpgsqlParameter("id", NpgsqlTypes.NpgsqlDbType.Uuid));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("type", NpgsqlTypes.NpgsqlDbType.Text));
+
+                sqlCmd.Prepare();
+
+                sqlCmd.Parameters["id"].Value = compatibility.Id;
+                sqlCmd.Parameters["type"].Value = compatibility.Type;
+
+                int nbRowAffected = sqlCmd.ExecuteNonQuery();
+
+                if (nbRowAffected > 0) {
+                    throw new AccessDbException(sqlCmd.CommandText, $"Unable to create a compatibility instance with type name : {compatibility.Type}");
+                }
+
+                result = true;
+
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Unable to create a compatibility instance with type name : {compatibility.Type}.\nException Message: {ex.Message}.\nException : {ex}");
+                
+                if(transaction != null) transaction.Rollback();
+            }
+
+            return result;
+        }
+
+        public bool CreateAnimalCompatibility(AnimalCompatibility animalCompatibility)
         {
             bool result = false;
             NpgsqlCommand? sqlCmd = null;
@@ -298,40 +371,92 @@ namespace RefugeConsole.CoucheAccesDB
             {
                 sqlCmd = new NpgsqlCommand(
                     $"""
-                    INSERT INTO public."Compatibilities" ("Id", "Type", "Value", "Description", "AnimalId")
-                    VALUES (:id, :type, :value, :description, :animalId)
-
+                    INSERT INTO public."AnimalCompatibilities" ("Id", "Value", "Description", "AnimalId", "CompatibilityId")
+                    VALUES ( :id, :value, :description, :animalId, :compatibilityId )
                     """,
                     this.SqlConn
                 );
 
                 sqlCmd.Parameters.Add(new NpgsqlParameter("id", NpgsqlTypes.NpgsqlDbType.Uuid));
-                sqlCmd.Parameters.Add(new NpgsqlParameter("type", NpgsqlTypes.NpgsqlDbType.Text));
                 sqlCmd.Parameters.Add(new NpgsqlParameter("value", NpgsqlTypes.NpgsqlDbType.Text));
                 sqlCmd.Parameters.Add(new NpgsqlParameter("description", NpgsqlTypes.NpgsqlDbType.Text));
                 sqlCmd.Parameters.Add(new NpgsqlParameter("animalId", NpgsqlTypes.NpgsqlDbType.Text));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("compatibilityId", NpgsqlTypes.NpgsqlDbType.Uuid));
 
                 sqlCmd.Prepare();
 
-                sqlCmd.Parameters["id"].Value = compatibility.Id;
-                sqlCmd.Parameters["type"].Value = compatibility.Type;
-                sqlCmd.Parameters["value"].Value = compatibility.Value;
-                sqlCmd.Parameters["description"].Value = compatibility.Description;
-                sqlCmd.Parameters["animalId"].Value = compatibility.AnimalId;
+                sqlCmd.Parameters["id"].Value = animalCompatibility.Id;
+                sqlCmd.Parameters["value"].Value = animalCompatibility.Value;
+                sqlCmd.Parameters["description"].Value = animalCompatibility.Description;
+                sqlCmd.Parameters["animalId"].Value = animalCompatibility.AnimalId;
+                sqlCmd.Parameters["compatibilityId"].Value = animalCompatibility.CompatibilityId;
+
 
                 int nbRowAffected = sqlCmd.ExecuteNonQuery();
 
-                if (nbRowAffected == 0) throw new AccessDbException(sqlCmd.CommandText, $"Unable to create a compatibility with an animal in Db.\nObject\n{compatibility}");
+                if (nbRowAffected == 0) throw new AccessDbException(sqlCmd.CommandText, $"Unable to create a compatibility with an animal in Db.\nObject\n{animalCompatibility}");
 
                 result = true;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Unable to create a compatibility with an animal.\nReason : {ex.Message}.\nObject :\n{compatibility}\nException:\n{ex}");
+                Debug.WriteLine($"Unable to create a compatibility with an animal.\nReason : {ex.Message}.\nObject :\n{animalCompatibility}\nException:\n{ex}");
                 throw;
             }
 
             return result;
         }
+
+
+        public HashSet<Compatibility> GetCompatibilities()
+        {
+            HashSet<Compatibility> result = new HashSet<Compatibility>();
+            NpgsqlCommand? sqlCmd = null;
+            NpgsqlDataReader? reader = null;
+
+            try
+            {
+                sqlCmd = new NpgsqlCommand(
+                    """
+                    SELECT *
+                    FROM public."Compatibilities"
+                    """,
+                    this.SqlConn
+                );
+
+                sqlCmd.Prepare();
+
+                reader = sqlCmd.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    result.Add(new Compatibility(
+                        new Guid(Convert.ToString(reader["Id"])!),
+                        Convert.ToString(reader["Type"])!
+                    )); 
+                }
+
+                // Close the reader 
+                reader.Close();
+
+            }
+            catch (Exception ex)
+            {
+                if (reader != null) reader.Close();
+
+                if (Debugger.IsAttached)
+                    Debug.WriteLine($"Unable to retrieve compatibilities instance! Message: {ex.Message}.\nException : {ex}");
+
+                if (sqlCmd != null)
+                    throw new AccessDbException(sqlCmd.CommandText, $"Unable to retrieve compatibilities instance! Message: {ex.Message}.\nException : {ex}");
+                else
+                    throw new AccessDbException("SqlCommand is null!", $"Unable to retrieve compatibilities instance! Message: {ex.Message}.\nException : {ex}");
+            }
+
+            return result;
+
+        }
+
+
     }
 }

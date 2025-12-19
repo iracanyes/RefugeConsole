@@ -101,7 +101,7 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
 
         public HashSet<Vaccination> Vaccinations { get; set; } = new HashSet<Vaccination>();
 
-        public HashSet<Compatibility> Compatibilities { get; set; } = new HashSet<Compatibility>();
+        public HashSet<AnimalCompatibility> AnimalCompatibilities { get; set; } = new HashSet<AnimalCompatibility>();
 
         public HashSet<Admission> Admissions { get; } = new HashSet<Admission>();
 
@@ -248,32 +248,32 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
             }
         }
 
-        public void AddCompatibility(Compatibility compatibility)
+        public void AddAnimalCompatibility(AnimalCompatibility animalCompatibility)
         {
-            ArgumentNullException.ThrowIfNull(compatibility, nameof(compatibility));
+            ArgumentNullException.ThrowIfNull(animalCompatibility, nameof(animalCompatibility));
 
             try
             {
-                Compatibilities.Add(compatibility);
+                AnimalCompatibilities.Add(animalCompatibility);
 
             }
             catch (ArgumentException ex)
             {
-                MyLogger.LogError("Unable to add a compatibility. Reason : {0} ", ex.Message);
+                MyLogger.LogError("Unable to add a animalCompatibility. Reason : {0} ", ex.Message);
             }
         }
 
-        public void RemoveCompatibility(Compatibility compatibility)
+        public void RemoveCompatibility(AnimalCompatibility animalCompatibility)
         {
-            ArgumentNullException.ThrowIfNull(compatibility, nameof(compatibility));
+            ArgumentNullException.ThrowIfNull(animalCompatibility, nameof(animalCompatibility));
 
             try
             {
-                Compatibilities.Remove(compatibility);
+                AnimalCompatibilities.Remove(animalCompatibility);
             }
             catch (ArgumentException ex)
             {
-                MyLogger.LogError("Unable to remove a compatibility. Reason : {0} ", ex.Message);
+                MyLogger.LogError("Unable to remove a animalCompatibility. Reason : {0} ", ex.Message);
             }
         }
 

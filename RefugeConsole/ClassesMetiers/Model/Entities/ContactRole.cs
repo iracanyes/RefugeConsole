@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Text;
 
 namespace RefugeConsole.ClassesMetiers.Model.Entities
@@ -25,6 +26,7 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
             this.Role = role;
         }
 
+        [Key]
         public Guid Id { get; private set; }
 
         public Guid ContactId { get; set; } = Guid.Empty;

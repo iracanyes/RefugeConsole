@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Text;
 
 namespace RefugeConsole.ClassesMetiers.Model.Entities
@@ -18,8 +19,9 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
             this.Name = name;
         }
 
+        [Key]
         public Guid Id { get; private set; }
-
+        [Required]
         public string Name {  get; set; }
 
 

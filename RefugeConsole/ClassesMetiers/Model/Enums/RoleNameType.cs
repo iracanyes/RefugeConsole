@@ -2,7 +2,7 @@
 
 namespace RefugeConsole.ClassesMetiers.Model.Enums
 {
-    internal enum ContactType
+    internal enum RoleNameType
     {
         [Description("Autres contact")]
         OtherContact = 1,

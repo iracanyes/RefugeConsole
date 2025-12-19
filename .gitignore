@@ -78,6 +78,7 @@ lerna-debug.log*
 
 # IDEs and editors
 /.idea
+**/.idea
 .project
 .classpath
 .c9/
@@ -121,4 +122,11 @@ docker/db/password.txt
 # Migrations
 **/Migrations
 **/*.sql
+
+
+# Jetbrains DataGrid
+/data
+**/*.sql
+**/queries
+
 
