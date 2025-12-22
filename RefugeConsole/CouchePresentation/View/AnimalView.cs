@@ -13,6 +13,43 @@ namespace RefugeConsole.CouchePresentation.View
     {
         private static readonly ILogger MyLogger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger(nameof(AnimalView));
 
+        public static void AddColors(Animal animal, List<Color> colors)
+        {
+            bool addMoreColor = false;
+            List<string> colorsNames = colors.Select(c => c.Name).ToList();
+            List<string> selectedColors = new List<string>();
+
+            try
+            {
+                do {
+
+                    // Ask for color name input
+                    string colorName = SharedView.ChoiceInList<string>("Quel est la couleur de l'animal?", colorsNames);
+
+                    // Select corresponding Color object
+                    Color selectedColor = colors.First(c => c.Name == colorName);
+
+                    
+                    animal.AddAnimalColor(new AnimalColor(animal, selectedColor));
+
+                    colorsNames.Remove(colorName);
+
+                    addMoreColor = SharedView.InputBoolean($"Voulez-vous ajouter une couleur pour l'animal ({animal.Name})");
+
+
+                } while (addMoreColor);
+            }
+            catch (Exception ex)
+            {
+                if(Debugger.IsAttached)
+                    Debug.WriteLine($"Error while asking color name input.\n{ex.Message}");
+                MyLogger.LogError($"Error while adding animal's color from user input. {ex.Message}");
+                throw new Exception($"Error while asking color name input.\n{ex.Message}");
+            }
+
+
+
+        }
 
         public static Animal AddAnimal()
         {
@@ -26,7 +63,8 @@ namespace RefugeConsole.CouchePresentation.View
             string name = SharedView.InputString("Entrez le nom de l'animal: ");
             AnimalType type = SharedView.EnumChoice<AnimalType>("Entrez le type de l'animal (chat, chien) : ");
             GenderType gender = SharedView.EnumChoice<GenderType>("Entrez le sexe de l'animal : ");
-            string color = SharedView.InputString("Entrez la couleur de l'animal : ");
+
+            
             DateOnly birthDate = SharedView.InputDateOnly("Entrez la date de naissance de l'animal : (Format : ) ");
             
             // Check if is alive or record death date
@@ -40,12 +78,19 @@ namespace RefugeConsole.CouchePresentation.View
             bool isSterilized = SharedView.InputBoolean("L'animal est-il stérilisé? (Oui/Non) ");
 
             // Check if is sterilized or record the sterilization's date
-            bool isSterilizationDateKnown = SharedView.InputBoolean("Connaissez-vous la date de stérilisation? (Oui/Non)");
+            bool isSterilizationDateKnown = false;
             DateOnly? dateSterilization = null;
-            if (isSterilizationDateKnown)
+
+            if (isSterilized)
             {
-                dateSterilization = SharedView.InputDateOnly("Entrez la date de stérilisation de l'animal? ");
+                isSterilizationDateKnown = SharedView.InputBoolean("Connaissez-vous la date de stérilisation? (Oui/Non)");
+
+                if (isSterilizationDateKnown)
+                {
+                    dateSterilization = SharedView.InputDateOnly($"Entrez la date de stérilisation de l'animal?");
+                }
             }
+        
              
             string particularity = SharedView.InputMultipleLines("Entrez les particularités de l'animal: ");
             string description = SharedView.InputMultipleLines("Entrez la description de l'animal: ");
@@ -55,8 +100,7 @@ namespace RefugeConsole.CouchePresentation.View
                 animal = new Animal(
                     name, 
                     type, 
-                    gender, 
-                    color, 
+                    gender,  
                     birthDate, 
                     deathDate, 
                     isSterilized, 
@@ -64,6 +108,8 @@ namespace RefugeConsole.CouchePresentation.View
                     particularity, 
                     description
                 );
+
+                
                 
             }
             catch (Exception ex) {
@@ -88,19 +134,20 @@ namespace RefugeConsole.CouchePresentation.View
                 name = {animal.Name}
                 type = {animal.Type}
                 gender = {animal.Gender}
-                color = {animal.Color}
+                colors = [{string.Join(", ", animal.AnimalColors.Select(ac => ac.Color.Name).ToList())}]
                 birthDate = {animal.BirthDate}
                 deathDate = {animal.DeathDate}
                 isSterilized = {animal.IsSterilized}
                 dateSterilization = {animal.DateSterilization}
-                particularity = {animal.Particularity}
-                description = {animal.Description}
+                particularity :
+                {animal.Particularity}
+                
+                description :
+                {animal.Description}
                 ==============================================
                 """
             );
 
-
-            SharedView.WaitForKeyPress();
         }
 
         public static Animal UpdateAnimal(Animal animal)
@@ -118,7 +165,6 @@ namespace RefugeConsole.CouchePresentation.View
 
             AnimalType type = SharedView.EnumChoice<AnimalType>($"Entrez le type de l'animal (chat, chien) : (Actuel = {animal.Type})");
             GenderType gender = SharedView.EnumChoice<GenderType>($"Entrez le sexe de l'animal : (Actuel = {animal.Gender})");
-            string color = SharedView.InputString($"Entrez la couleur de l'animal : (Actuel = {animal.Color})");
             DateOnly birthDate = SharedView.InputDateOnly($"Entrez la date de naissance de l'animal (Format : 26/11/1989) : (Actuel = {animal.BirthDate})");
 
             // Check if is alive or record death date
@@ -133,12 +179,19 @@ namespace RefugeConsole.CouchePresentation.View
             bool isSterilized = SharedView.InputBoolean($"L'animal est-il stérilisé? (Oui/Non)   (Actuel = {animal.IsSterilized})");
 
             // Check if is sterilized or record the sterilization's date
-            bool isSterilizationDateKnown = SharedView.InputBoolean("Connaissez-vous la date de stérilisation? (Oui/Non)");
+            bool isSterilizationDateKnown = false;
             DateOnly? dateSterilization = null;
-            if (isSterilizationDateKnown)
-            {
-                dateSterilization = SharedView.InputDateOnly($"Entrez la date de stérilisation de l'animal? (Actuel = {animal.DateSterilization}) ");
-            }
+
+            if (isSterilized) {                
+
+                isSterilizationDateKnown = SharedView.InputBoolean("Connaissez-vous la date de stérilisation? (Oui/Non)");
+
+                if (isSterilizationDateKnown)
+                {
+                    dateSterilization = SharedView.InputDateOnly($"Entrez la date de stérilisation de l'animal? (Actuel = {animal.DateSterilization}) ");
+                }
+            }             
+            
 
             string particularity = SharedView.InputMultipleLines($"Entrez les particularités de l'animal: \nValeur actuel\n=============\n {animal.Particularity}\nRéponse\n================ ");
 
@@ -151,7 +204,6 @@ namespace RefugeConsole.CouchePresentation.View
                     name,
                     type,
                     gender,
-                    color,
                     birthDate,
                     deathDate,
                     isSterilized,
@@ -201,18 +253,14 @@ namespace RefugeConsole.CouchePresentation.View
                         }
 
                         Compatibility compatibility = compatibilities.First(c => c.Type == type);
-                        CompatibilityValueType value = SharedView.EnumChoice<CompatibilityValueType>("Quel est sa valeur?");
+                        bool value = SharedView.InputBoolean("Quel est sa valeur? (Oui/Non)");
 
-                        // If already selected type, skip 
-                        if (value == CompatibilityValueType.Unknown)
-                        {
-                            Console.WriteLine("Vous avez entrée une valeur incorrecte pour cette compatibilité!");
-                            continue;
-                        }
+                        string? description = null;
 
-                        string description = SharedView.InputMultipleLines("Décrivez cette compatibilité?");
+                        if (value)
+                            description = SharedView.InputMultipleLines("Décrivez cette compatibilité?");
 
-                        AnimalCompatibility animalCompatibility = new AnimalCompatibility(MyEnumHelper.GetEnumDescription(value), description, animal, compatibility);
+                        AnimalCompatibility animalCompatibility = new AnimalCompatibility( animal, compatibility, value, description);
 
                         animal.AddAnimalCompatibility(animalCompatibility);
 

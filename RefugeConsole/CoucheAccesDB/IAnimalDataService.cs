@@ -10,7 +10,9 @@ namespace RefugeConsole.CoucheAccesDB
     {
         Animal CreateAnimal(Animal animal);
 
-        Animal? GetAnimal(string name);
+        List<Animal> GetAnimalByName(string name);
+
+        Animal? GetAnimalById(string id);
 
         Animal UpdateAnimal(Animal animal);
 
@@ -21,5 +23,9 @@ namespace RefugeConsole.CoucheAccesDB
         bool CreateAnimalCompatibility(AnimalCompatibility animalCompatibility);
 
         HashSet<Compatibility> GetCompatibilities();
+
+        HashSet<Color> GetColors();
+
+        bool CreateAnimalColor(AnimalColor animalColor, NpgsqlTransaction? transaction = null);
     }
 }

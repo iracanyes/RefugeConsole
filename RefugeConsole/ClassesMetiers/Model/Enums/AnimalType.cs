@@ -7,9 +7,9 @@ namespace RefugeConsole.ClassesMetiers.Model.Enums
 {
     internal enum AnimalType
     {
-        [Description("Chat")]
+        [Description("chat")]
         Cat = 1,
-        [Description("Chien")]
+        [Description("chien")]
         Dog = 2,
         [Description("Inconnu")]
         Unknown = 0,

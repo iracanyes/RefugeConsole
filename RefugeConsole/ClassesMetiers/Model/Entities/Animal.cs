@@ -20,7 +20,6 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
             string name,
             AnimalType type,
             GenderType gender,
-            string color,
             DateOnly? birthDate,
             DateOnly? deathDate,
             bool isSterilized,
@@ -34,7 +33,6 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
             this.Name = name;
             this.Type = MyEnumHelper.GetEnumDescription(type);
             this.Gender = MyEnumHelper.GetEnumDescription(gender);
-            this.Color = color;
             this.BirthDate = birthDate;
             this.DeathDate = deathDate;
             this.IsSterilized = isSterilized;
@@ -49,7 +47,6 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
             string name,
             AnimalType type,
             GenderType gender,
-            string color,
             DateOnly? birthDate,
             DateOnly? deathDate,
             bool isSterilized,
@@ -62,7 +59,6 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
             this.Name = name;
             this.Type = MyEnumHelper.GetEnumDescription(type);
             this.Gender = MyEnumHelper.GetEnumDescription(gender);
-            this.Color = color;
             this.BirthDate = birthDate;
             this.DeathDate = deathDate;
             this.IsSterilized = isSterilized;
@@ -83,8 +79,7 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
         public string Type { get; set; }
         [Required]
         public string Gender { get; set; }
-        [Required]
-        public string Color { get; set; }
+        
         
         public DateOnly? BirthDate { get; set; }
 
@@ -97,6 +92,8 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
         public string Particularity { get; set; }
 
         public string Description { get; set; }
+
+        public HashSet<AnimalColor> AnimalColors { get; set; } = new HashSet<AnimalColor>();
 
 
         public HashSet<Vaccination> Vaccinations { get; set; } = new HashSet<Vaccination>();
@@ -112,7 +109,32 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
         public HashSet<FosterFamily> FosterFamilies { get; } = new HashSet<FosterFamily>();
 
         /*================ Méthodes d'instance =========================================*/
-        
+
+        public void AddAnimalColor(AnimalColor animalColor)
+        {
+
+            try
+            {
+                AnimalColors.Add(animalColor);
+            }catch(Exception ex)
+            {
+                MyLogger.LogError(ex.Message + "\nException : " + ex.StackTrace);
+            }
+        }
+
+        public void RemoveAnimalColor(AnimalColor animalColor)
+        {
+
+            try
+            {
+                AnimalColors.Remove(animalColor);
+            }
+            catch (Exception ex)
+            {
+                MyLogger.LogError(ex.Message + "\nException : " + ex.StackTrace);
+            }
+        }
+
 
         public void AddAdmission(Admission admission)
         {
@@ -280,12 +302,12 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
         public override string ToString()
         {
             return string.Format(
-                "Animal{{ id = {0}, name = {1}, type = {2}, gender = {3}, color = {4}, birthDate = {5}, deathDate = {6}, sterilized = {7}, dateSterilization = {8}, particularity = {9}, description = {10} }}",
+                "Animal{{ id = {0}, name = {1}, type = {2}, gender = {3}, colors = [{4}], birthDate = {5}, deathDate = {6}, sterilized = {7}, dateSterilization = {8}, particularity = {9}, description = {10} }}",
                 this.Id,
                 this.Name,
                 this.Type,
                 this.Gender,
-                this.Color,
+                string.Join(", ", this.AnimalColors.Select(ac => ac.Color.Name).ToList()),
                 this.BirthDate,
                 this.DeathDate,
                 this.IsSterilized,

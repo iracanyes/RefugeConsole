@@ -32,7 +32,7 @@ namespace RefugeConsole.CouchePresentation.ViewModel
 
                 RoleNameType roleName = SharedView.EnumChoice<RoleNameType>("Sélectionner le rôle désiré : ");
                 
-                Role role = roles.First(r => r.Name == MyEnumHelper.GetEnumDescription(roleName));
+                Role role = roles.First(r => r.Name == MyEnumHelper.GetEnumDescription<RoleNameType>(roleName));
 
                 contact.AddContactRole(new ContactRole(contact, role));
             }
@@ -44,13 +44,41 @@ namespace RefugeConsole.CouchePresentation.ViewModel
             }
         }
 
+        public void AddAdress(Contact contact)
+        {
+           
+            try
+            {
+
+                // Save address
+                bool result = contactDataService.CreateAddress(contact.Address);
+
+                // Attach new address to contact
+                if (!result)
+                {
+                    throw new Exception($"Unknown error while saving an address into DB.");
+                }                    
+                
+
+            }
+            catch (Exception ex)
+            {
+                if (Debugger.IsAttached)
+                    Debug.WriteLine($"Error while saving new address.\nError : {ex.Message}.\nException : {ex}");
+
+                MyLogger.LogError($"Error while saving new address. Error : {ex.Message}. Exception : {ex}");
+                
+            }
+        }
+
         public void ViewContact() {
             try
             {
                 string registryNumber = SharedView.InputString("Entrez le numéro de registre national de la personne de contact : ");
 
-                Contact contactInfo = contactDataService.GetContactByRegistryNumber(registryNumber);                
-
+                // Get contact 
+                Contact contactInfo = contactDataService.GetContactByRegistryNumber(registryNumber);
+                
                 ContactView.DisplayContactInfo(contactInfo);
 
 
@@ -67,11 +95,13 @@ namespace RefugeConsole.CouchePresentation.ViewModel
             
             try
             {
-                // Capture user input for a contact instance
+                // Capture user input for a contact instance and address
                 Contact contactInfoData = ContactView.AddContactInfo();
 
-                // Add roles
-                addRole = SharedView.InputBoolean("Voulez-vous ajouter un rôle à la personne de contact?");
+                // Save the address 
+                this.AddAdress(contactInfoData);
+               
+                // Add roles to the contact 
                 do
                 {
                     this.AddContactRole(contactInfoData);
@@ -83,6 +113,9 @@ namespace RefugeConsole.CouchePresentation.ViewModel
                 Contact contactInfo = contactDataService.CreateContact(contactInfoData);
 
                 ContactView.DisplayContactInfo(contactInfo);
+
+                // Lock screen until key press
+                SharedView.WaitForKeyPress();
 
 
             }catch(Exception ex)

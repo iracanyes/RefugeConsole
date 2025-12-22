@@ -18,10 +18,10 @@ namespace RefugeConsole.ClassesMetiers.Exceptions
             return $"""
                 Cause: 
                 ========
-                {this.Source}
+                {details}
                 Details: 
                 ========
-                {details}
+                {this.Message}
                 Exception: 
                 ======
                 {this.StackTrace}

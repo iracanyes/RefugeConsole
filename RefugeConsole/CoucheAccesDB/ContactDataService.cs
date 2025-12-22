@@ -18,7 +18,7 @@ namespace RefugeConsole.CoucheAccesDB
             : base()
         { }
 
-        public bool CreateAddress(Address address, NpgsqlTransaction transaction)
+        public bool CreateAddress(Address address, NpgsqlTransaction? transaction = null)
         {
             bool result = false;
             NpgsqlCommand? sqlCmd = null;
@@ -128,11 +128,6 @@ namespace RefugeConsole.CoucheAccesDB
 
             try
             {
-                // Insert the address 
-                bool addressCreated = this.CreateAddress(contact.Address, transaction);
-                // Throw an exception in case nothing happen!
-                if (!addressCreated) throw new AccessDbException("Unable to create an address instance", $"Error while creating an address instance with object : {contact.Address}");
-
                                
 
                 sqlCmd = new NpgsqlCommand(
@@ -173,8 +168,11 @@ namespace RefugeConsole.CoucheAccesDB
                 {
                     bool contactRoleCreated = this.CreateContactRole(contactRole, transaction);
 
-                    if (!contactRoleCreated) throw new Exception($"Unable to create a ContactRole instance with data : {contactRole}.");
+                    if (!contactRoleCreated) throw new AccessDbException($"", $"Unable to create a ContactRole instance with data : {contactRole}.");
                 }
+
+                // Commit transaction
+                transaction.Commit();
 
                 result = this.GetContactByRegistryNumber(contact.RegistryNumber);
             }
@@ -183,12 +181,12 @@ namespace RefugeConsole.CoucheAccesDB
                 if(Debugger.IsAttached)
                     Debug.WriteLine($"Unable to create a contact info instance.\nObject : \n{contact}\nReason : \n{ex.Message}\nException : \n{ex}");
                 
-                if(transaction != null) transaction.Rollback();
+                if(transaction != null && transaction.Connection != null) transaction.Rollback();
 
                 if (sqlCmd != null)
-                    throw new AccessDbException(sqlCmd.CommandText, $"Unable to update a Contact instance. Object : {contact}.");
+                    throw new AccessDbException(sqlCmd.CommandText, $"Unable to create a Contact instance. \nError: {ex.Message}.\nException: {ex}");
                 else
-                    throw new AccessDbException("SqlCommand is null", $"Unable to update a Contact instance. Object : {contact}.");
+                    throw new AccessDbException("SqlCommand is null", $"Unable to create a Contact instance. \nError: {ex.Message}.\nException: {ex}.");
 
 
             }
@@ -209,18 +207,19 @@ namespace RefugeConsole.CoucheAccesDB
             {
                 sqlCmd = new NpgsqlCommand(
                     $"""
-                    SELECT c."Id" AS "Id"
+                    SELECT c."Id" AS "Id",
                            c."Firstname" AS "Firstname",
                            c."Lastname" AS "Lastname",
                            c."RegistryNumber" AS "RegistryNumber",
                            c."Email" AS "Email",
                            c."MobileNumber" AS "MobileNumber",
                            c."PhoneNumber" AS "PhoneNumber",
+                           a."Id" AS "AddressId",
                            a."Street" AS "Street",
                            a."City" AS "City",
                            a."State" AS "State" ,
                            a."ZipCode" AS "ZipCode",
-                           a."Country" AS "Country", 
+                           a."Country" AS "Country" 
                     FROM public."Contacts" c
                     INNER JOIN public."Addresses" a
                         ON c."AddressId" = a."Id"
@@ -240,7 +239,7 @@ namespace RefugeConsole.CoucheAccesDB
                 if(reader.Read())
                 {
                     Address address = new Address(
-                        new Guid(Convert.ToString(reader["Id"])!),
+                        new Guid(Convert.ToString(reader["AddressId"])!),
                         Convert.ToString(reader["Street"])!,
                         Convert.ToString(reader["City"])!,
                         Convert.ToString(reader["State"])!,
@@ -258,9 +257,14 @@ namespace RefugeConsole.CoucheAccesDB
                         Convert.ToString(reader["MobileNumber"])!,
                         address
                     );
+
+                    
                 }
 
                 reader.Close();
+
+                // Attach contact's roles to contact
+                this.GetContactRoles(result!);
 
 
             }
@@ -280,6 +284,8 @@ namespace RefugeConsole.CoucheAccesDB
 
             return result;
         }
+
+
 
         public bool UpdateAddress(Address address, NpgsqlTransaction transaction)
         {
@@ -321,19 +327,22 @@ namespace RefugeConsole.CoucheAccesDB
 
                 int nbRowAffected = sqlCmd.ExecuteNonQuery();
 
-                if (nbRowAffected == 0) throw new AccessDbException(sqlCmd.CommandText, $"Unable to update an address instance with info : {address}.");
+                if (nbRowAffected == 0) throw new AccessDbException(sqlCmd.CommandText, $"Unknown error while updating an address instance with info.");
 
                 result = true;
 
 
             }
             catch (Exception ex)
-            {
-                Debug.WriteLine($"Unable to update an address instance. Object : {address}. Exception message: {ex.Message}.\nException : {ex}");
+            {                
+
+                if(Debugger.IsAttached)
+                    Debug.WriteLine($"Unable to update an address instance.\n Exception message: {ex.Message}.\nException : {ex}");
+
                 if (sqlCmd != null)
-                    throw new AccessDbException(sqlCmd.CommandText, $"Unable to update an address instance. Object : {address}.");
+                    throw new AccessDbException(sqlCmd.CommandText, $"Unable to update an address instance.\n Exception message: {ex.Message}.\nException : {ex}");
                 else
-                    throw new AccessDbException("SqlCommand is null", $"Unable to update an address instance. Object : {address}.");
+                    throw new AccessDbException("SqlCommand - UpdateAddress", $"Unable to update an address instance.\n Exception message: {ex.Message}.\nException : {ex}");
             }
 
 
@@ -358,7 +367,6 @@ namespace RefugeConsole.CoucheAccesDB
                     SET "Firstname" = :firstname,
                         "Lastname" = :lastname,
                         "RegistryNumber" = :registryNumber,
-                        "Address" = :address,
                         "Email" = :email,
                         "PhoneNumber" = :phoneNumber,
                         "MobileNumber" = :mobileNumber,
@@ -372,8 +380,7 @@ namespace RefugeConsole.CoucheAccesDB
                 sqlCmd.Parameters.Add(new NpgsqlParameter("id", NpgsqlTypes.NpgsqlDbType.Uuid));
                 sqlCmd.Parameters.Add(new NpgsqlParameter("firstname", NpgsqlTypes.NpgsqlDbType.Text));
                 sqlCmd.Parameters.Add(new NpgsqlParameter("lastname", NpgsqlTypes.NpgsqlDbType.Text));
-                sqlCmd.Parameters.Add(new NpgsqlParameter("registryNumber", NpgsqlTypes.NpgsqlDbType.Text));
-                sqlCmd.Parameters.Add(new NpgsqlParameter("address", NpgsqlTypes.NpgsqlDbType.Text));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("registryNumber", NpgsqlTypes.NpgsqlDbType.Text));;
                 sqlCmd.Parameters.Add(new NpgsqlParameter("email", NpgsqlTypes.NpgsqlDbType.Text));
                 sqlCmd.Parameters.Add(new NpgsqlParameter("phoneNumber", NpgsqlTypes.NpgsqlDbType.Text));
                 sqlCmd.Parameters.Add(new NpgsqlParameter("mobileNumber", NpgsqlTypes.NpgsqlDbType.Text));
@@ -386,7 +393,6 @@ namespace RefugeConsole.CoucheAccesDB
                 sqlCmd.Parameters["firstname"].Value = contact.Firstname;
                 sqlCmd.Parameters["lastname"].Value = contact.Lastname;
                 sqlCmd.Parameters["registryNumber"].Value = contact.RegistryNumber;
-                sqlCmd.Parameters["address"].Value = contact.Address;
                 sqlCmd.Parameters["email"].Value = contact.Email;
                 sqlCmd.Parameters["phoneNumber"].Value = contact.PhoneNumber;
                 sqlCmd.Parameters["mobileNumber"].Value = contact.MobileNumber;
@@ -394,7 +400,10 @@ namespace RefugeConsole.CoucheAccesDB
 
                 int nbRowAffected = sqlCmd.ExecuteNonQuery();
 
-                if (nbRowAffected == 0) throw new AccessDbException(sqlCmd.CommandText, $"Unable to create a Contact instance in DB!\nObject:\n{contact}");
+                if (nbRowAffected == 0) throw new AccessDbException(sqlCmd.CommandText, $"Unable to update a Contact instance in DB!\nObject:\n{contact}");
+
+                // Commit transaction
+                transaction.Commit();
 
                 result = this.GetContactByRegistryNumber(contact.RegistryNumber);
 
@@ -402,21 +411,23 @@ namespace RefugeConsole.CoucheAccesDB
             }
             catch (Exception ex)
             {
+                if(transaction != null && transaction.Connection != null) transaction.Rollback();
 
-                Debug.WriteLine($"Unable to retrieve a contact instance with registry number : {contact.RegistryNumber}.\nReason :\n{ex.Message}\nException : \n{ex}");
+                if(Debugger.IsAttached)
+                    Debug.WriteLine($"Unable to update a contact instance with registry number : {contact.RegistryNumber}.\nReason :\n{ex.Message}\nException : \n{ex}");
 
                 if (sqlCmd != null)
-                    throw new AccessDbException(sqlCmd.CommandText, ex.Message);
+                    throw new AccessDbException(sqlCmd.CommandText, $"Unable to update a contact instance with registry number : {contact.RegistryNumber}.\nReason :\n{ex.Message}\nException : \n{ex}");
                 else
-                    throw new AccessDbException($"Unable to retrieve a contact instance with registry number : {contact.RegistryNumber}.", ex.Message);
+                    throw new AccessDbException("sqlCmd is null", $"Unable to update a contact instance with registry number : {contact.RegistryNumber}.\nReason :\n{ex.Message}\nException : \n{ex}");
             }
 
-            if (result == null) throw new Exception($"Unable to retrieve a contact instance with registry number : {contact.RegistryNumber}");
+            if (result == null) throw new Exception($"Unable to update a contact instance with registry number : {contact.RegistryNumber}");
 
             return result;
         }
 
-        public bool DeleteContact(Contact contact)
+        public bool DeleteContactRole(ContactRole contactRole, NpgsqlTransaction? transaction = null)
         {
             bool result = false;
             NpgsqlCommand? sqlCmd = null;
@@ -425,9 +436,60 @@ namespace RefugeConsole.CoucheAccesDB
             {
                 sqlCmd = new NpgsqlCommand(
                     $"""
+                    DELETE FROM public."ContactRoles"
+                    WHERE "Id" = :id
+                    """,
+                    this.SqlConn,
+                    transaction
+                );
+
+                sqlCmd.Parameters.Add(new NpgsqlParameter("id", NpgsqlTypes.NpgsqlDbType.Uuid));
+
+                sqlCmd.Prepare();
+
+                sqlCmd.Parameters["id"].Value = contactRole.Id;
+
+                int nbRowAffected = sqlCmd.ExecuteNonQuery();
+
+                if (nbRowAffected == 0) throw new AccessDbException(sqlCmd.CommandText, $"Error while deleting contact's role info : \n{contactRole.Id}");
+
+                result = true;
+            }
+            catch (Exception ex)
+            {
+                if(Debugger.IsAttached)
+                    Debug.WriteLine($"Unable to delete a contact's role instance : {contactRole.Id}.\nReason :\n{ex.Message}\nException : \n{ex}");
+
+                if (sqlCmd != null)
+                    throw new AccessDbException(sqlCmd.CommandText, $"Unable to delete a contact's role instance : {contactRole.Id}.\nReason :\n{ex.Message}\nException : \n{ex}");
+                else
+                    throw new AccessDbException($"DeleteContact : qlCmd is null", $"Unable to delete a contact's role instance : {contactRole.Id}.\nReason :\n{ex.Message}\nException : \n{ex}");
+            }
+
+
+            return result;
+        }
+
+        public bool DeleteContact(Contact contact)
+        {
+            bool result = false;
+            NpgsqlCommand? sqlCmd = null;
+            NpgsqlTransaction transaction = this.SqlConn.BeginTransaction();
+
+            try
+            {
+
+                // Delete all contact's roles
+                foreach (ContactRole contactRole in contact.ContactRoles)
+                    this.DeleteContactRole(contactRole, transaction);
+
+                sqlCmd = new NpgsqlCommand(
+                    $"""
                     DELETE FROM public."Contacts"
                     WHERE "Id" = :id
-                    """    
+                    """,
+                    this.SqlConn, 
+                    transaction
                 );
 
                 sqlCmd.Parameters.Add(new NpgsqlParameter("id", NpgsqlTypes.NpgsqlDbType.Uuid));
@@ -440,22 +502,28 @@ namespace RefugeConsole.CoucheAccesDB
 
                 if (nbRowAffected == 0) throw new AccessDbException(sqlCmd.CommandText, $"Error while deleting contact info : \n{contact}");
 
+                transaction.Commit();
+
                 result = true;
             }
             catch (Exception ex)
             {
+                if(transaction != null && transaction.Connection != null) transaction.Rollback();
 
-                Debug.WriteLine($"Unable to retrieve a contact instance with registry number : {contact.RegistryNumber}.\nReason :\n{ex.Message}\nException : \n{ex}");
+                if(Debugger.IsAttached)
+                    Debug.WriteLine($"Unable to delete a contact instance with registry number : {contact.RegistryNumber}.\nReason :\n{ex.Message}\nException : \n{ex}");
 
                 if (sqlCmd != null)
-                    throw new AccessDbException(sqlCmd.CommandText, ex.Message);
+                    throw new AccessDbException(sqlCmd.CommandText, $"Unable to delete a contact instance with registry number : {contact.RegistryNumber}.\nReason :\n{ex.Message}\nException : \n{ex}");
                 else
-                    throw new AccessDbException($"Unable to retrieve a contact instance with registry number : {contact.RegistryNumber}.", ex.Message);
+                    throw new AccessDbException($"DeleteContact : sqlCmd is null", $"Unable to delete a contact instance with registry number : {contact.RegistryNumber}.\nReason :\n{ex.Message}\nException : \n{ex}");
             }
             
 
             return result;
         }
+
+
         
 
         public Contact GetContactById(Guid id)
@@ -559,7 +627,7 @@ namespace RefugeConsole.CoucheAccesDB
 
                 reader = sqlCmd.ExecuteReader();
 
-                if (reader.Read())
+                while (reader.Read())
                 {
                     roles.Add(new Role(
                        new Guid(Convert.ToString(reader["Id"])!),
@@ -570,15 +638,77 @@ namespace RefugeConsole.CoucheAccesDB
                 reader.Close();
 
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 if (reader != null) reader.Close();
 
+                if (Debugger.IsAttached)
+                    Debug.WriteLine($"Error while retrieving roles from DB. Error : {ex.Message}. Exception: {ex}");
 
-                throw;
+                if (sqlCmd != null)
+                    throw new AccessDbException(sqlCmd.CommandText, $"Error while retrieving roles from DB. Error : {ex.Message}. Exception: {ex}");
+                else
+                    throw new AccessDbException("sqlCmd is NULL", $"Error while retrieving roles from DB. Error : {ex.Message}. Exception: {ex}");
+
             }
 
             return roles;
+
+        }
+
+
+        public HashSet<ContactRole> GetContactRoles(Contact contact) { 
+            NpgsqlCommand? sqlCmd = null;
+            NpgsqlDataReader? reader = null;
+
+            try
+            {
+                sqlCmd = new NpgsqlCommand(
+                    """
+                    SELECT cr."Id" AS "Id",
+                            cr."ContactId" AS "ContactId",
+                            cr."RoleId" AS "RoleId",
+                            r."Name" AS "RoleName"
+                    FROM public."ContactRoles" cr
+                    INNER JOIN public."Roles" r
+                        ON cr."RoleId" = r."Id"
+                    WHERE cr."ContactId" = :contactId                
+                    """,
+                    this.SqlConn
+                );
+
+                sqlCmd.Parameters.Add(new NpgsqlParameter("contactId", NpgsqlTypes.NpgsqlDbType.Uuid));
+
+                sqlCmd.Prepare();
+
+                sqlCmd.Parameters["contactId"].Value = contact.Id;
+
+                reader = sqlCmd.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    Role role = new Role(new Guid(Convert.ToString(reader["RoleId"])!), Convert.ToString(reader["RoleName"])!);
+
+                    contact.ContactRoles.Add(  new ContactRole(new Guid(Convert.ToString(reader["Id"])!), contact, role) );
+                }
+
+                reader.Close();
+            }
+            catch (Exception ex)
+            {
+
+                if (reader != null) reader.Close();
+
+                if (Debugger.IsAttached)
+                    Debug.WriteLine($"Error while retrieving contact's roles from DB. Error : {ex.Message}. Exception: {ex}");
+
+                if (sqlCmd != null)
+                    throw new AccessDbException(sqlCmd.CommandText, $"Error while retrieving contact's roles from DB. Error : {ex.Message}. Exception: {ex}");
+                else
+                    throw new AccessDbException("sqlCmd is NULL", $"Error while retrieving contact's roles from DB. Error : {ex.Message}. Exception: {ex}");
+            }
+
+            return contact.ContactRoles;
 
         }
 

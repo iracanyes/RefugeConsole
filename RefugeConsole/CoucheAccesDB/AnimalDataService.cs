@@ -33,8 +33,8 @@ namespace RefugeConsole.CoucheAccesDB
             {
                 sqlCmd = new NpgsqlCommand(
                     $"""
-                    INSERT INTO public."Animals" ("Id", "Name", "Type", "Gender", "Color", "BirthDate", "DeathDate", "IsSterilized","DateSterilization", "Particularity", "Description")
-                    VALUES (:id, :name, :type, :gender, :color, :dateBirth, :dateDeath, :isSterilized, :dateSterilization, :particularity, :description )
+                    INSERT INTO public."Animals" ("Id", "Name", "Type", "Gender", "BirthDate", "DeathDate", "IsSterilized","DateSterilization", "Particularity", "Description")
+                    VALUES (:id, :name, :type, :gender, :dateBirth, :dateDeath, :isSterilized, :dateSterilization, :particularity, :description )
                     """,
                     this.SqlConn
                 );
@@ -43,7 +43,6 @@ namespace RefugeConsole.CoucheAccesDB
                 sqlCmd.Parameters.Add(new NpgsqlParameter("name", NpgsqlTypes.NpgsqlDbType.Text));
                 sqlCmd.Parameters.Add(new NpgsqlParameter("type", NpgsqlTypes.NpgsqlDbType.Text));
                 sqlCmd.Parameters.Add(new NpgsqlParameter("gender", NpgsqlTypes.NpgsqlDbType.Text));
-                sqlCmd.Parameters.Add(new NpgsqlParameter("color", NpgsqlTypes.NpgsqlDbType.Text));
                 sqlCmd.Parameters.Add(new NpgsqlParameter("dateBirth", NpgsqlTypes.NpgsqlDbType.Date));
                 sqlCmd.Parameters.Add(new NpgsqlParameter("dateDeath", NpgsqlTypes.NpgsqlDbType.Date));
                 sqlCmd.Parameters.Add(new NpgsqlParameter("isSterilized", NpgsqlTypes.NpgsqlDbType.Boolean));
@@ -60,7 +59,6 @@ namespace RefugeConsole.CoucheAccesDB
                 sqlCmd.Parameters["name"].Value = animal.Name;
                 sqlCmd.Parameters["type"].Value = animal.Type;
                 sqlCmd.Parameters["gender"].Value = animal.Gender;
-                sqlCmd.Parameters["color"].Value = animal.Color;
                 sqlCmd.Parameters["dateBirth"].Value = animal.BirthDate;
                 sqlCmd.Parameters["dateDeath"].Value = animal.DeathDate != null ? animal.DeathDate : DBNull.Value;
                 sqlCmd.Parameters["isSterilized"].Value = animal.IsSterilized;
@@ -73,7 +71,7 @@ namespace RefugeConsole.CoucheAccesDB
 
                 if (createOp == 0) throw new Exception("Impossible d'ajouter l'animal!");
 
-                result = GetAnimal(animal.Name);
+                result = GetAnimalById(animal.Id);
 
             }
             catch (Exception ex)
@@ -89,56 +87,10 @@ namespace RefugeConsole.CoucheAccesDB
             return result;
         }
 
-        public bool AnimalNameExists(string name)
+        
+        public List<Animal> GetAnimalByName(string name)
         {
-            bool result = false;
-            NpgsqlCommand? sqlCmd = null;
-            NpgsqlDataReader? reader = null;
-
-            try
-            {
-                sqlCmd = new NpgsqlCommand(
-                    """
-                    SELECT exists (
-                        SELECT 1
-                        FROM public."Animals"
-                        WHERE "Name" = :name
-                        LIMIT 1
-                    );
-                    """,
-                    this.SqlConn
-                );
-
-                sqlCmd.Parameters.Add(new NpgsqlParameter("name", NpgsqlTypes.NpgsqlDbType.Text));
-
-                sqlCmd.Prepare();
-
-                sqlCmd.Parameters["name"].Value = name;
-
-
-                reader = sqlCmd.ExecuteReader();
-
-                if (reader.Read())
-                {
-                    result = Convert.ToBoolean(reader["exists"]);
-                }
-
-                reader.Close();
-                
-            }
-            catch (Exception ex)
-            {
-                if(Debugger.IsAttached)
-                    Debug.WriteLine($"Error while checking if animal named '{name}' already exists in DB. Error : {ex.Message}\nException : {ex}");
-                throw;
-            }
-
-            return result;
-        }
-
-        public Animal? GetAnimal(string name)
-        {
-            Animal? result = null;
+            List<Animal> result = [];
             NpgsqlCommand? sqlCmd = null;
             NpgsqlDataReader? reader = null;
 
@@ -161,20 +113,18 @@ namespace RefugeConsole.CoucheAccesDB
 
                 reader = sqlCmd.ExecuteReader();
 
-                if (reader.Read())
+                while (reader.Read())
                 {
                     Debug.WriteLine($"reader - birthDate : {reader["BirthDate"]}");
                     DateOnly? birthDate = reader["BirthDate"] != DBNull.Value ? (DateOnly) reader["BirthDate"] : null; 
                     DateOnly? deathDate = reader["DeathDate"] != DBNull.Value ? (DateOnly) reader["DeathDate"] : null;
                     DateOnly? dateSterilization = reader["dateSterilization"] != DBNull.Value ? (DateOnly)  reader["dateSterilization"] : null;
-                    
 
-                    result = new Animal(
+                    Animal animal = new Animal(
                         Convert.ToString(reader["Id"])!,
                         Convert.ToString(reader["Name"])!,
                         MyEnumHelper.GetEnumFromDescription<AnimalType>(Convert.ToString(reader["Type"])!),
                         MyEnumHelper.GetEnumFromDescription<GenderType>(Convert.ToString(reader["Gender"])!),
-                        Convert.ToString(reader["Color"])!,
                         birthDate,
                         deathDate,
                         Convert.ToBoolean(reader["IsSterilized"])!,
@@ -185,9 +135,20 @@ namespace RefugeConsole.CoucheAccesDB
                     );
 
                     
+
+                    result.Add( animal );                    
+
+
                 }
 
                 reader.Close();
+
+                foreach(Animal a in result)
+                {
+                    // Retrieve animal's colors from DB
+                    this.GetAnimalColors(a);
+                }
+
             }
             catch (Exception ex)
             {
@@ -202,6 +163,145 @@ namespace RefugeConsole.CoucheAccesDB
             
 
             return result;
+        }
+
+        public Animal? GetAnimalById(string id)
+        {
+            Animal? result = null;
+            NpgsqlCommand? sqlCmd = null;
+            NpgsqlDataReader? reader = null;
+
+            try
+            {
+                sqlCmd = new NpgsqlCommand(
+                    $"""
+                    SELECT *
+                    FROM public."Animals" a
+                    WHERE "Id" = :id
+                    """,
+                    SqlConn
+                );
+
+                sqlCmd.Parameters.Add("id", NpgsqlTypes.NpgsqlDbType.Varchar);
+
+                sqlCmd.Prepare();
+
+                sqlCmd.Parameters["id"].Value = id;
+
+                reader = sqlCmd.ExecuteReader();
+
+                if (reader.Read())
+                {
+                    Debug.WriteLine($"reader - birthDate : {reader["BirthDate"]}");
+                    DateOnly? birthDate = reader["BirthDate"] != DBNull.Value ? (DateOnly)reader["BirthDate"] : null;
+                    DateOnly? deathDate = reader["DeathDate"] != DBNull.Value ? (DateOnly)reader["DeathDate"] : null;
+                    DateOnly? dateSterilization = reader["dateSterilization"] != DBNull.Value ? (DateOnly)reader["dateSterilization"] : null;
+
+
+                    result = new Animal(
+                        Convert.ToString(reader["Id"])!,
+                        Convert.ToString(reader["Name"])!,
+                        MyEnumHelper.GetEnumFromDescription<AnimalType>(Convert.ToString(reader["Type"])!),
+                        MyEnumHelper.GetEnumFromDescription<GenderType>(Convert.ToString(reader["Gender"])!),
+                        birthDate,
+                        deathDate,
+                        Convert.ToBoolean(reader["IsSterilized"])!,
+                        dateSterilization,
+                        Convert.ToString(reader["Particularity"])!,
+                        Convert.ToString(reader["Description"])!
+
+                    );
+
+                    
+
+
+                }
+
+                reader.Close();
+
+                if (result == null)
+                    throw new AccessDbException(sqlCmd.CommandText, $"Unknown error while retrieving animal.");
+
+                // Retrieve animal's colors from DB
+                this.GetAnimalColors(result);
+            }
+            catch (Exception ex)
+            {
+                reader?.Close();
+
+                if (sqlCmd != null)
+                    throw new AccessDbException(sqlCmd.CommandText, ex.ToString());
+                else
+                    throw new AccessDbException("Error while retrieving an animal", ex.ToString());
+            }
+
+
+
+            return result;
+        }
+
+        public HashSet<AnimalColor> GetAnimalColors(Animal animal)
+        {
+            NpgsqlCommand? sqlCmd = null;
+            NpgsqlDataReader? reader = null;
+
+            try
+            {
+                sqlCmd = new NpgsqlCommand(
+                    """
+                    SELECT ac."Id" as "Id",
+                            ac."AnimalId" AS "AnimalId",
+                            ac."ColorId" AS "ColorId",
+                            c."Name" AS "ColorName"
+                    FROM public."AnimalColors" ac
+                    INNER JOIN public."Colors" c
+                        ON ac."ColorId" = c."Id"
+                    WHERE ac."AnimalId" = :animalId
+                    """,
+                    this.SqlConn
+                );
+
+                sqlCmd.Parameters.Add(new NpgsqlParameter("animalId", NpgsqlTypes.NpgsqlDbType.Varchar));
+
+                sqlCmd.Prepare();
+
+                sqlCmd.Parameters["animalId"].Value = animal.Id;
+
+                reader = sqlCmd.ExecuteReader();
+
+                while (reader.Read()) {
+                    Color color = new Color(new Guid(Convert.ToString(reader["ColorId"])!), Convert.ToString(reader["ColorName"])!);
+
+                    animal.AnimalColors.Add(
+                        new AnimalColor(
+                            new Guid(Convert.ToString(reader["Id"])!),
+                            animal,
+                            new Color(
+                                new Guid(Convert.ToString(reader["Id"])!),
+                                Convert.ToString(reader["ColorName"])!
+                            )
+                        )
+                    );
+                }
+
+                reader.Close();
+            }
+            catch (Exception ex)
+            {
+                if(reader != null) { reader.Close(); }
+
+                if (Debugger.IsAttached)
+                    Debug.WriteLine($"Error while retrieving animal's colors for {animal.Name}. Message: {ex.Message}. Exception : {ex}");
+
+                if (sqlCmd != null)
+                    throw new AccessDbException(sqlCmd.CommandText, $"Error while retrieving animal's colors for {animal.Name}. Message: {ex.Message}. Exception : {ex}");
+                else
+                    throw new AccessDbException("sqlCmd.CommandText is null", $"Error while retrieving animal's colors for {animal.Name}. Message: {ex.Message}. Exception : {ex}");
+
+            }
+
+            return animal.AnimalColors;
+
         }
 
         public bool RemoveAnimal(Animal animal)
@@ -255,7 +355,6 @@ namespace RefugeConsole.CoucheAccesDB
                     SET "Name" = :name,
                         "Type" = :type,
                         "Gender" = :gender,
-                        "Color" = :color,
                         "BirthDate" = :dateBirth,
                         "DeathDate" = :dateDeath,
                         "IsSterilized" = :isSterilized,
@@ -270,8 +369,7 @@ namespace RefugeConsole.CoucheAccesDB
                 sqlCmd.Parameters.Add(new NpgsqlParameter("id", NpgsqlTypes.NpgsqlDbType.Text));
                 sqlCmd.Parameters.Add(new NpgsqlParameter("name", NpgsqlTypes.NpgsqlDbType.Text));
                 sqlCmd.Parameters.Add(new NpgsqlParameter("type", NpgsqlTypes.NpgsqlDbType.Text));
-                sqlCmd.Parameters.Add(new NpgsqlParameter("gender", NpgsqlTypes.NpgsqlDbType.Text));
-                sqlCmd.Parameters.Add(new NpgsqlParameter("color", NpgsqlTypes.NpgsqlDbType.Text));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("gender", NpgsqlTypes.NpgsqlDbType.Varchar));
                 sqlCmd.Parameters.Add(new NpgsqlParameter("dateBirth", NpgsqlTypes.NpgsqlDbType.Date));
                 sqlCmd.Parameters.Add(new NpgsqlParameter("dateDeath", NpgsqlTypes.NpgsqlDbType.Date));
                 sqlCmd.Parameters.Add(new NpgsqlParameter("isSterilized", NpgsqlTypes.NpgsqlDbType.Boolean));
@@ -288,7 +386,6 @@ namespace RefugeConsole.CoucheAccesDB
                 sqlCmd.Parameters["name"].Value = animal.Name;
                 sqlCmd.Parameters["type"].Value = animal.Type;
                 sqlCmd.Parameters["gender"].Value = animal.Gender;
-                sqlCmd.Parameters["color"].Value = animal.Color;
                 sqlCmd.Parameters["dateBirth"].Value = animal.BirthDate;
                 sqlCmd.Parameters["dateDeath"].Value = animal.DeathDate != null ? animal.DeathDate : DBNull.Value;
                 sqlCmd.Parameters["isSterilized"].Value = animal.IsSterilized;
@@ -301,7 +398,7 @@ namespace RefugeConsole.CoucheAccesDB
 
                 if (nbRowAffected == 0) throw new AccessDbException(sqlCmd.CommandText, $"Unable to update animal with id {animal.Id}! No row affected!");
 
-                result = GetAnimal(animal.Name);
+                result = GetAnimalById(animal.Id);
             }
             catch (Exception ex)
             {
@@ -378,7 +475,7 @@ namespace RefugeConsole.CoucheAccesDB
                 );
 
                 sqlCmd.Parameters.Add(new NpgsqlParameter("id", NpgsqlTypes.NpgsqlDbType.Uuid));
-                sqlCmd.Parameters.Add(new NpgsqlParameter("value", NpgsqlTypes.NpgsqlDbType.Text));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("value", NpgsqlTypes.NpgsqlDbType.Boolean));
                 sqlCmd.Parameters.Add(new NpgsqlParameter("description", NpgsqlTypes.NpgsqlDbType.Text));
                 sqlCmd.Parameters.Add(new NpgsqlParameter("animalId", NpgsqlTypes.NpgsqlDbType.Text));
                 sqlCmd.Parameters.Add(new NpgsqlParameter("compatibilityId", NpgsqlTypes.NpgsqlDbType.Uuid));
@@ -386,8 +483,8 @@ namespace RefugeConsole.CoucheAccesDB
                 sqlCmd.Prepare();
 
                 sqlCmd.Parameters["id"].Value = animalCompatibility.Id;
-                sqlCmd.Parameters["value"].Value = animalCompatibility.Value;
-                sqlCmd.Parameters["description"].Value = animalCompatibility.Description;
+                sqlCmd.Parameters["value"].Value = animalCompatibility.Value != null ? animalCompatibility.Value : DBNull.Value;
+                sqlCmd.Parameters["description"].Value = animalCompatibility.Description != null ? animalCompatibility.Description : DBNull.Value;
                 sqlCmd.Parameters["animalId"].Value = animalCompatibility.AnimalId;
                 sqlCmd.Parameters["compatibilityId"].Value = animalCompatibility.CompatibilityId;
 
@@ -455,6 +552,102 @@ namespace RefugeConsole.CoucheAccesDB
 
             return result;
 
+        }
+
+        public HashSet<Color> GetColors()
+        {
+            HashSet<Color> colors = new HashSet<Color>();
+            NpgsqlCommand? sqlCmd = null;
+            NpgsqlDataReader? reader = null;
+
+            try
+            {
+                sqlCmd = new NpgsqlCommand(
+                    """
+                    SELECT "Id", "Name"
+                    FROM public."Colors"
+                    """,
+                    this.SqlConn
+                );
+
+                sqlCmd.Prepare();
+
+                reader = sqlCmd.ExecuteReader();
+
+                while (reader.Read()) {
+                    colors.Add(new Color(
+                        new Guid(Convert.ToString(reader["Id"])!),
+                        Convert.ToString(reader["Name"])!
+                    ));
+                }
+
+                reader.Close();
+            }
+            catch (Exception ex)
+            {
+                if(reader != null) reader.Close();
+
+                if (Debugger.IsAttached)
+                    Debug.WriteLine($"Error while retrieving animal's colors in database. Message : {ex.Message}. Error : {ex} ");
+                if (sqlCmd != null)
+                    throw new AccessDbException(sqlCmd.CommandText, $"Error while retrieving animal's colors in database. Message : {ex.Message}. Error : {ex} ");
+                else
+                    throw new AccessDbException("SQL Command is null", $"Error while retrieving animal's colors in database. Message : {ex.Message}. Error : {ex} ");
+            }
+
+            return colors;
+        }
+
+        public bool CreateAnimalColor(AnimalColor animalColor, NpgsqlTransaction? transaction = null)
+        {
+            bool result = false;
+            NpgsqlCommand? sqlCmd = null;
+
+            try
+            {
+                sqlCmd = new NpgsqlCommand(
+                    """
+                    INSERT INTO public."AnimalColors" ("Id", "AnimalId", "ColorId")
+                    VALUES (:id, :animalId, :colorId)
+                    """,
+                    this.SqlConn,
+                    transaction
+                );
+
+                sqlCmd.Parameters.Add(new NpgsqlParameter("id", NpgsqlTypes.NpgsqlDbType.Uuid));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("animalId", NpgsqlTypes.NpgsqlDbType.Varchar));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("colorId", NpgsqlTypes.NpgsqlDbType.Uuid));
+
+
+                sqlCmd.Prepare();
+
+                sqlCmd.Parameters["id"].Value = animalColor.Id;
+                sqlCmd.Parameters["animalId"].Value = animalColor.AnimalId;
+                sqlCmd.Parameters["colorId"].Value = animalColor.ColorId;
+
+                int nbRowAffected = sqlCmd.ExecuteNonQuery();
+
+                if(nbRowAffected == 0)
+                    throw new AccessDbException(sqlCmd.CommandText, $"Error while creating animal's colors in database.");
+
+                result = true;
+
+
+            }
+            catch (Exception ex)
+            {
+
+                if (Debugger.IsAttached)
+                    Debug.WriteLine($"Error while creating animal's colors in database. Message : {ex.Message}. Error : {ex} ");
+
+                if (sqlCmd != null)
+                    throw new AccessDbException(sqlCmd.CommandText, $"Error while creating animal's colors in database. Message : {ex.Message}. Error : {ex} ");
+                else
+                    throw new AccessDbException("SQL Command is null", $"Error while creating animal's colors in database. Message : {ex.Message}. Error : {ex} ");
+            }
+
+
+            return result;
         }
 
 

@@ -28,16 +28,19 @@ namespace RefugeConsole.CouchePresentation.ViewModel
             try
             {
                 string name = SharedView.InputString("Entrez le nom de l'animal : ");
-                Animal? animal = animalDataService.GetAnimal(name);
+                List<Animal> animals = animalDataService.GetAnimalByName(name);
 
-                if (animal == null)
+                if (animals.Count == 0)
                 {
                     Console.WriteLine($"Animal with name '{name}' not found!");
                     SharedView.WaitForKeyPress();
                     return;
                 }
 
-                AnimalView.DisplayAnimal(animal);
+                foreach(Animal animal in  animals) 
+                    AnimalView.DisplayAnimal(animal);
+
+                SharedView.WaitForKeyPress();
             }
             catch (Exception ex) {
                 Debug.WriteLine($"Error while retrieving an animal! Reason : {ex.Message} \nException: {ex}");
@@ -53,11 +56,23 @@ namespace RefugeConsole.CouchePresentation.ViewModel
                 // Display view to get animal info from user
                 Animal animalInfo = AnimalView.AddAnimal();
 
+                // retrieve animal colors in DB
+                List<Color> colors = animalDataService.GetColors().ToList();
+
+                // Require animal's colors input from user
+                AnimalView.AddColors(animalInfo, colors);
+
+
                 //Debug.WriteLine($"Animal ID : {animalInfo.Id}"); 
                 //MyLogger.LogInformation($"Animal ID : {animalInfo.Id}");
 
                 // Save the animal's information
                 Animal animal = animalDataService.CreateAnimal(animalInfo);
+
+                // Save animal's colors in database
+                foreach (AnimalColor animalColor in animalInfo.AnimalColors) {
+                    animalDataService.CreateAnimalColor(animalColor);
+                }
                 
                 // Handle adding animal compatibilities
                 this.AddAnimalCompatibilities(animal);
@@ -65,10 +80,13 @@ namespace RefugeConsole.CouchePresentation.ViewModel
                 // Display the newly created animal
                 AnimalView.DisplayAnimal(animal);
 
+                // Lock screen until any key press
+                SharedView.WaitForKeyPress();
+
             }
             catch (Exception ex) {
-                Debug.WriteLine("Error while creating an animal. Reason : {0}", ex.Message);
-                Debug.WriteLine("Exception : {0}", ex);
+                if(Debugger.IsAttached)
+                    Debug.WriteLine($"Error while creating an animal. Reason : {ex.Message}.Exception : {ex}");
             }
         }
 
@@ -76,9 +94,32 @@ namespace RefugeConsole.CouchePresentation.ViewModel
         {
             try
             {
+                // Get the animal's name from user
                 string name = SharedView.InputString("Entrez le nom de l'animal : ");
-                Animal? animalInfo = animalDataService.GetAnimal(name);
 
+                // Retrieve animals with same name from DB
+                List<Animal> animalInfos = animalDataService.GetAnimalByName(name);
+                Animal? animalInfo = null;
+
+                // If one result set to animalInfo object,
+                // else if more than one result display retrieved animals' info and handle asking for the id of the animal desired 
+                if (animalInfos.Count == 1)
+                {
+                    animalInfo = animalInfos[0];
+                }
+                else if (animalInfos.Count > 1)
+                {
+
+                    foreach (Animal animal in animalInfos)
+                    {
+                        AnimalView.DisplayAnimal(animal);
+                    }
+
+                    string id = SharedView.InputString("Entrez l'identifiant de l'animal désiré : ");
+                    animalInfo = animalDataService.GetAnimalById(id);
+                }
+
+                // Stop if no animal found with the name
                 if (animalInfo == null)
                 {
                     Console.WriteLine($"Animal with name '{name}' not found!");
@@ -86,14 +127,20 @@ namespace RefugeConsole.CouchePresentation.ViewModel
                     return;
                 }
 
-
+                // Get updated animal's infos from user
                 Animal updatedAnimalInfo = AnimalView.UpdateAnimal(animalInfo);
 
+                // Update animal's infos in DB
                 Animal updatedAnimal = animalDataService.UpdateAnimal(updatedAnimalInfo);
 
+                // Handle adding new compatibilities for the animal
                 this.AddAnimalCompatibilities(updatedAnimal);
 
+                // Display animal's infos
                 AnimalView.DisplayAnimal(updatedAnimal);
+
+                // Lock screen until any key press
+                SharedView.WaitForKeyPress();
 
             }
             catch (Exception ex)
@@ -105,10 +152,32 @@ namespace RefugeConsole.CouchePresentation.ViewModel
         public void RemoveAnimal() {
             try
             {
-                // G
+                // Get the animal's name from user
                 string name = SharedView.InputString("Entrez le nom de l'animal : ");
-                Animal? animalInfo = animalDataService.GetAnimal(name);
 
+                // Retrieve animals with same name from DB
+                List<Animal> animalInfos = animalDataService.GetAnimalByName(name);
+                Animal? animalInfo = null;
+
+                // If one result set to animalInfo object,
+                // else if more than one result display retrieved animals' info and handle asking for the id of the animal desired 
+                if (animalInfos.Count == 1)
+                {
+                    animalInfo = animalInfos[0];
+                }
+                else if(animalInfos.Count > 1)
+                {
+
+                    foreach (Animal animal in animalInfos)
+                    {
+                        AnimalView.DisplayAnimal(animal);
+                    }
+
+                    string id = SharedView.InputString("Entrez l'identifiant de l'animal désiré : ");
+                    animalInfo = animalDataService.GetAnimalById(id);
+                }
+
+                // Stop if no animal found with the name
                 if (animalInfo == null)
                 {
                     Console.WriteLine($"L'animal nommé '{name}' n'existe pas dans la base de donnée!");
@@ -116,10 +185,12 @@ namespace RefugeConsole.CouchePresentation.ViewModel
                     return;
                 }
 
+                // Remove animal from DB
                 bool result = animalDataService.RemoveAnimal(animalInfo);
 
                 if (result) Console.WriteLine($"L'animal nommé {name} a été supprimé!");
 
+                // Lock screen until key press
                 SharedView.WaitForKeyPress();
             }
             catch (Exception ex)
@@ -137,8 +208,24 @@ namespace RefugeConsole.CouchePresentation.ViewModel
                 // If animal is null, Ask the user to input the animal's name and retrieve it
                 if(animal == null)
                 {
-                    string name = SharedView.InputString("Entrez le nom de l'animal :");
-                    animal = animalDataService.GetAnimal(name);
+                    string name = SharedView.InputString("Entrez le nom de l'animal : ");
+                    List<Animal> animalInfos = animalDataService.GetAnimalByName(name);
+
+                    if (animalInfos.Count == 1)
+                    {
+                        animal = animalInfos[0];
+                    }
+                    else if (animalInfos.Count > 1)
+                    {
+
+                        foreach (Animal animalFound in animalInfos)
+                        {
+                            AnimalView.DisplayAnimal(animalFound);
+                        }
+
+                        string id = SharedView.InputString("Entrez l'identifiant de l'animal désiré : ");
+                        animal = animalDataService.GetAnimalById(id);
+                    }
                 }
 
                 // Get a list of all available compatibilities

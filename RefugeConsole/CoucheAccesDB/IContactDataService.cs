@@ -8,21 +8,27 @@ namespace RefugeConsole.CoucheAccesDB
 {
     internal interface IContactDataService
     {
-        public bool CreateAddress(Address address, NpgsqlTransaction transaction);
+        bool CreateAddress(Address address, NpgsqlTransaction? transaction = null);
 
-        public bool CreateContactRole(ContactRole contactRole, NpgsqlTransaction transaction);
+        bool CreateContactRole(ContactRole contactRole, NpgsqlTransaction transaction);
 
-        public Contact GetContactByRegistryNumber(string registryNumber);
+        Contact GetContactByRegistryNumber(string registryNumber);
 
-        public Contact CreateContact(Contact contact);
+        Contact CreateContact(Contact contact);
 
-        public bool UpdateAddress(Address address, NpgsqlTransaction transaction);
+        bool UpdateAddress(Address address, NpgsqlTransaction? transaction = null);
 
-        public Contact UpdateContact(Contact contact);
+        Contact UpdateContact(Contact contact);
 
-        public bool DeleteContact(Contact contact);
+        bool DeleteContactRole(ContactRole contactRole, NpgsqlTransaction? transaction = null);
 
-        public HashSet<Role> GetRoles();
+        bool DeleteContact(Contact contact);
+
+        HashSet<Role> GetRoles();
+        
+        HashSet<ContactRole> GetContactRoles(Contact contact);
+
+
 
     }
 }

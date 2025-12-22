@@ -22,25 +22,26 @@ namespace RefugeConsole.CouchePresentation.View
             Address? address = null;
 
             Console.WriteLine("Ajouter une addresse (rue, ville, province/état/département, code postal, pays");
-
-            string street = SharedView.InputString("Entrez votre rue : ");
-            string city = SharedView.InputString("Entrez votre ville : ");
-            string state = SharedView.InputString("Entrez votre province : ");
-            string zipCode = SharedView.InputString("Entrez votre code postal : ");
-            string country = SharedView.InputString("Entrez votre pays de résidence : ");
+            
 
             try
             {
+                string street = SharedView.InputString("Entrez votre rue : ");
+                string city = SharedView.InputString("Entrez votre ville : ");
+                string state = SharedView.InputString("Entrez votre province : ");
+                string zipCode = SharedView.InputString("Entrez votre code postal : ");
+                string country = SharedView.InputString("Entrez votre pays de résidence : ");
+
                 address = new Address(street, city, state, zipCode, country);
             }
             catch (Exception ex)
             {
                 if (Debugger.IsAttached)
                 {
-                    Debug.WriteLine($"Unable to accept input for an address instance with the following data :\n street = {street}, city = {city}, state = {state}, zipCode = {zipCode}, country = {country}.\nException message : {ex.Message}\nException : {ex}");
+                    Debug.WriteLine($"Unable to accept input for an address instance. \nException message : {ex.Message}\nException : {ex}");
                 }
 
-                throw new Exception($"Unable to accept input for an address instance with the following data :\n street = {street}, city = {city}, state = {state}, zipCode = {zipCode}, country = {country}.\nException message : {ex.Message}\nException : {ex}");
+                throw new Exception($"Unable to accept input for an address instance.\nException message : {ex.Message}\nException : {ex}");
             }
 
             return address;
@@ -66,7 +67,9 @@ namespace RefugeConsole.CouchePresentation.View
             string email = SharedView.InputString("Entrez votre email : ");
             string mobileNumber = SharedView.InputString("Entrez votre numéro de portable : ");
             string phoneNumber = SharedView.InputString("Entrez votre numéro de téléphone fixe : ");
+
             Address address = ContactView.AddAddress();
+
             try
             {
                
@@ -101,6 +104,7 @@ namespace RefugeConsole.CouchePresentation.View
                 phoneNumber = {contactInfo.PhoneNumber}
                 mobileNumber = {contactInfo.MobileNumber}
                 address = {contactInfo.Address}
+                roles = {string.Join(", ", contactInfo.ContactRoles.Select(cr => cr.Role.Name).ToList())}
                 ==============================================
                 """
                     
@@ -108,6 +112,8 @@ namespace RefugeConsole.CouchePresentation.View
 
             SharedView.WaitForKeyPress();
         }
+
+        
 
         public static Contact UpdateContactInfo(Contact contactInfo) {
             Contact? result = null;
@@ -135,8 +141,18 @@ namespace RefugeConsole.CouchePresentation.View
                 string city = SharedView.InputString($"Entrez votre ville : ({contactInfo.Address.City})");
                 string state = SharedView.InputString($"Entrez votre province : ({contactInfo.Address.State})");
                 string zipCode = SharedView.InputString($"Entrez votre code postal : ({contactInfo.Address.ZipCode})");
-                string country = SharedView.InputString($"Entrez votre pays de résidence : ({contactInfo.Address.Country})");
-                updatedAddress = new Address(contactInfo.Address.Id, street, city, state, zipCode, country);
+                //
+                // string country = SharedView.InputString($"Entrez votre pays de résidence : ({contactInfo.Address.Country})");
+                string country = "Belgique";
+
+                updatedAddress = new Address(
+                    contactInfo.Address.Id, 
+                    street, 
+                    city, 
+                    state, 
+                    zipCode, 
+                    country
+                );
             }
 
             try

@@ -7,11 +7,11 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
 {
     internal class AnimalCompatibility
     {        
-        public AnimalCompatibility(string value, string description, Animal animal, Compatibility compatibility)
-            : this(Guid.NewGuid(), value, description, animal, compatibility) 
+        public AnimalCompatibility(Animal animal, Compatibility compatibility, bool? value, string? description)
+            : this(Guid.NewGuid(), animal, compatibility, value, description) 
         { }
 
-        public AnimalCompatibility(Guid id, string value, string description, Animal animal, Compatibility compatibility) {
+        public AnimalCompatibility(Guid id, Animal animal, Compatibility compatibility, bool? value, string? description) {
             ArgumentNullException.ThrowIfNull(animal, nameof(animal));
             ArgumentNullException.ThrowIfNull(compatibility, nameof(compatibility));
 
@@ -31,9 +31,9 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
         public Guid Id { get; private set; }
         
         [Required]
-        public string Value { get; set; }
+        public bool? Value { get; set; }
 
-        public string Description { get; set; }
+        public string? Description { get; set; }
         
         public string AnimalId { get; set; }
 

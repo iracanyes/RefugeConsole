@@ -4,15 +4,15 @@ namespace RefugeConsole.ClassesMetiers.Model.Enums
 {
     internal enum RoleNameType
     {
-        [Description("Autres contact")]
+        [Description("autres")]
         OtherContact = 1,
-        [Description("Volontaire")]
+        [Description("benevole")]
         Volunteer = 2,
-        [Description("Candidat")]
+        [Description("candidat")]
         Candidate = 3,
-        [Description("Famille d'accueil")]
+        [Description("famille_accueil")]
         FosterFamily = 4,
-        [Description("Adoptant")]
+        [Description("adoptant")]
         Adopter = 5,
         Unknown = 0,
     }

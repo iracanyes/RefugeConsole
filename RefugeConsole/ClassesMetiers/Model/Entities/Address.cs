@@ -32,5 +32,10 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
         public string ZipCode { get; set; }
         [Required]
         public string Country { get; set; }
+
+        public override string ToString()
+        {
+            return $"Address{{ street = {Street}, city = {City}, state = {State}, zipCode = {ZipCode}, country = {Country} }}";
+        }
     }
 }

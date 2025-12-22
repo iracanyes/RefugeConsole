@@ -40,7 +40,7 @@ namespace RefugeConsole.CouchePresentation.View
             string[] keywords = ["quit", "exit", "Quit", "Exit", "q"];
             string? line;
 
-            Console.WriteLine(label);
+            Console.WriteLine(label + "\nPour quitter, allez à la ligne et tapez [Quit/quit/Exit/exit/q] puis Entrée pour quitter");
 
             try
             {
