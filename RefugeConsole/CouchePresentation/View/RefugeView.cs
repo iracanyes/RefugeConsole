@@ -91,7 +91,11 @@ namespace RefugeConsole.CouchePresentation.View
                 $"""
                 ============================================================
                 FosterFamily ID : {fm.Id}
-                ============================================================                
+                ============================================================
+                Créé le : {fm.DateCreated}
+                Début : {fm.DateStart}
+                Fin : {fm.DateEnd}
+
                 Animal
                 =======
                 Nom : {fm.Animal.Name}

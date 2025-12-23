@@ -132,7 +132,26 @@ namespace RefugeConsole.CouchePresentation.ViewModel
         /**
          * Fonctionnalité : Lister les familles d’accueil par où l’animal est passé
          */
-        public void ListAnimalPastFosterFamilies() { }
+        public void ListAnimalPastFosterFamilies() {
+            try
+            {
+                Animal? animal = this.animalViewModel.GetAnimalByName();
+
+                if (animal == null) throw new Exception("Unable to retrieve the corresponding animal!");
+
+                HashSet<FosterFamily> pastFosterFamilies = this.refugeDataService.GetFosterFamiliesForAnimal(animal);
+
+                foreach( FosterFamily family in pastFosterFamilies )
+                    RefugeView.DisplayFosterFamily(family);
+
+                SharedView.WaitForKeyPress();
+            }
+            catch (Exception ex)
+            {
+                if (Debugger.IsAttached)
+                    Debug.WriteLine($"Error while retrieving all past foster family for an animal. Error: {ex.Message}. Exception : {ex}.");
+            }
+        }
 
         /**
          * Fonctionnalité : Lister les animaux accueillis par une famille d’accueil
