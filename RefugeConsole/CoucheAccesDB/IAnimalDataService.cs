@@ -10,6 +10,8 @@ namespace RefugeConsole.CoucheAccesDB
     {
         Animal CreateAnimal(Animal animal);
 
+        HashSet<AnimalColor> GetAnimalColors(Animal animal);
+
         List<Animal> GetAnimalByName(string name);
 
         Animal? GetAnimalById(string id);

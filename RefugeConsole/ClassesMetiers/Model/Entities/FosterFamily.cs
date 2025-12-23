@@ -9,12 +9,12 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
 {
     internal class FosterFamily
     {
-        public FosterFamily(DateTime dateCreated, DateOnly dateStart, DateOnly dateEnd, Contact contact, Animal animal)
+        public FosterFamily(DateTime dateCreated, DateOnly dateStart, DateOnly? dateEnd, Contact contact, Animal animal)
             : this(Guid.NewGuid(), dateCreated, dateStart, dateEnd, contact, animal)
         {
         }
 
-        public FosterFamily(Guid id, DateTime dateCreated, DateOnly dateStart, DateOnly dateEnd, Contact contact, Animal animal)
+        public FosterFamily(Guid id, DateTime dateCreated, DateOnly dateStart, DateOnly? dateEnd, Contact contact, Animal animal)
         {
             ArgumentNullException.ThrowIfNull(contact, nameof(contact));
             ArgumentNullException.ThrowIfNull(animal, nameof(animal));
@@ -22,8 +22,8 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
 
             this.Id = id;
             this.DateCreated = dateCreated;
-            DateStart = dateStart;
-            DateEnd = dateEnd;
+            this.DateStart = dateStart;
+            this.DateEnd = dateEnd;
 
             this.ContactId = contact.Id;
             this.Contact = contact;
@@ -40,7 +40,7 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
 
         [Required]
         public DateOnly DateStart {  get; set; }
-        public DateOnly DateEnd
+        public DateOnly? DateEnd
         {
             get;
             set

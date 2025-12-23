@@ -45,11 +45,11 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
 
         [Required]
         public DateOnly DateStart { get; set; }
-        public DateOnly DateEnd {
+        public DateOnly? DateEnd {
             get;
             set
             {
-                if (DateStart > value)
+                if (value != null && DateStart > value)
                     throw new ArgumentOutOfRangeException("End date can't be before start date!");
                 field = value;
             } 

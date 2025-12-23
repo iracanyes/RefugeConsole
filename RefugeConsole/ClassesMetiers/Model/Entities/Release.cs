@@ -1,4 +1,5 @@
-﻿using RefugeConsole.ClassesMetiers.Model.Enums;
+﻿using RefugeConsole.ClassesMetiers.Helper;
+using RefugeConsole.ClassesMetiers.Model.Enums;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -8,19 +9,18 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
 {
     internal class Release
     {
-        public Release(DateTime dateCreated, DateOnly dateStart, DateOnly dateEnd, Contact contact, Animal animal)
-            : this(Guid.NewGuid(), dateCreated, dateStart, dateEnd, contact, animal) 
+        public Release(ReleaseType reason, DateTime dateCreated, Contact contact, Animal animal)
+            : this(Guid.NewGuid(), reason, dateCreated, contact, animal) 
         { }
 
-        public Release(Guid id, DateTime dateCreated, DateOnly dateStart, DateOnly dateEnd, Contact contact, Animal animal)
+        public Release(Guid id, ReleaseType reason, DateTime dateCreated, Contact contact, Animal animal)
         {
             ArgumentNullException.ThrowIfNull(contact, nameof(contact));
             ArgumentNullException.ThrowIfNull(animal, nameof(animal));
 
             this.Id = id;
+            this.Reason = MyEnumHelper.GetEnumDescription<ReleaseType>(reason);
             this.DateCreated = dateCreated;
-            this.DateStart = dateStart;
-            this.DateEnd = dateEnd;
 
             this.ContactId = contact.Id;
             this.Contact = contact;
@@ -31,12 +31,12 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
 
         [Key]
         public Guid Id { get; private set; }
+
+        [Required]
+        public string Reason { get; set; }
+
         [Required]
         public DateTime DateCreated { get; set; }
-        [Required]
-        public DateOnly DateStart { get; set; }
-
-        public DateOnly DateEnd { get; set; }
 
         [Required]
         public Guid ContactId { get; set; }
@@ -51,11 +51,10 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
         public override string ToString()
         {
             return string.Format(
-                "Release{{ id = {0}, type = {1}, dateCreated = {2}, dateStart = {3}, dateEnd = {4}, contact = {5}, animal = {6}}}",
+                "Release{{ id = {0}, reason = {1}, dateCreated = {2}, contact = {5}, animal = {6}}}",
                 this.Id, 
+                this.Reason,
                 this.DateCreated, 
-                this.DateStart,
-                this.DateEnd,
                 this.Contact,
                 this.Animal
             );

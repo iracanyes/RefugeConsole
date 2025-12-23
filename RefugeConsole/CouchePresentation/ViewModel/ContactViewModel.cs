@@ -90,7 +90,8 @@ namespace RefugeConsole.CouchePresentation.ViewModel
             }
         }
 
-        public void AddContact() {
+        public Contact AddContact() {
+            Contact? result = null;
             bool addRole = false;
             
             try
@@ -110,9 +111,9 @@ namespace RefugeConsole.CouchePresentation.ViewModel
                 } while (addRole);
 
                 // Save new contact
-                Contact contactInfo = contactDataService.CreateContact(contactInfoData);
+                result = contactDataService.CreateContact(contactInfoData);
 
-                ContactView.DisplayContactInfo(contactInfo);
+                ContactView.DisplayContactInfo(result);
 
                 // Lock screen until key press
                 SharedView.WaitForKeyPress();
@@ -124,7 +125,7 @@ namespace RefugeConsole.CouchePresentation.ViewModel
                 throw new Exception($"Unable to add contact info!\nReason : {ex.Message}\nException : \n{ex}");
             }
 
-            
+            return result;
         }
 
         public void UpdateContact() {
@@ -168,7 +169,7 @@ namespace RefugeConsole.CouchePresentation.ViewModel
                 if(result)
                     Console.WriteLine($"Le contact avec le numéro de registre national ({registryNumber}) a été supprimé!") ;
 
-
+                SharedView.WaitForKeyPress();
             }
             catch (Exception ex)
             {

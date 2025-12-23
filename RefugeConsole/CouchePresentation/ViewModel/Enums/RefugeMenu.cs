@@ -12,7 +12,7 @@ namespace RefugeConsole.CouchePresentation.ViewModel.Enums
         [Description("Lister les familles d'accueil par où l'animal est passé")]
         ListAnimalPastFosterFamilies = 2,
         [Description("Lister les animaux accueillis par une famille d'accueil")]
-        ListReleaseByFosterFamily = 3,
+        ListReleaseInFosterFamily = 3,
         [Description("Ajouter un candidat")]
         AddCandidate = 4,
         [Description("Ajouter une famille d'accueil à un animal")]

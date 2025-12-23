@@ -16,9 +16,11 @@ namespace RefugeConsole.CouchePresentation.View
 
         static MenuView()
         {
-            animalViewModel = new AnimalViewModel(new AnimalDataService());
-            contactViewModel = new ContactViewModel(new ContactDataService());
-            refugeViewModel = new RefugeViewModel();
+            AnimalDataService animalDataService = new AnimalDataService();
+            ContactDataService contactDataService = new ContactDataService();
+            animalViewModel = new AnimalViewModel(animalDataService);
+            contactViewModel = new ContactViewModel(contactDataService);
+            refugeViewModel = new RefugeViewModel(animalViewModel, contactViewModel, animalDataService, contactDataService, new RefugeDataService());
         }
 
         public static void Display()
@@ -62,7 +64,7 @@ namespace RefugeConsole.CouchePresentation.View
 
             switch (selection) {
                 case AnimalMenu.AddAnimal:
-                    animalViewModel.AddAnimal();
+                    refugeViewModel.AddAdmission();
                     break;
                 case AnimalMenu.ViewAnimal:
                     animalViewModel.ViewAnimal();
@@ -121,8 +123,8 @@ namespace RefugeConsole.CouchePresentation.View
                 case RefugeMenu.ListAnimalPastFosterFamilies:
                     refugeViewModel.ListAnimalPastFosterFamilies();
                     break;
-                case RefugeMenu.ListReleaseByFosterFamily:
-                    refugeViewModel.ListReleaseByFosterFamily();
+                case RefugeMenu.ListReleaseInFosterFamily:
+                    refugeViewModel.ListReleaseInFosterFamily();
                     break;
                 case RefugeMenu.AddCandidate:
                     refugeViewModel.AddCandidate();

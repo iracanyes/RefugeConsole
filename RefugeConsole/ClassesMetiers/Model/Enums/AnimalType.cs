@@ -11,7 +11,7 @@ namespace RefugeConsole.ClassesMetiers.Model.Enums
         Cat = 1,
         [Description("chien")]
         Dog = 2,
-        [Description("Inconnu")]
+        [Description("inconnu")]
         Unknown = 0,
     }
 }

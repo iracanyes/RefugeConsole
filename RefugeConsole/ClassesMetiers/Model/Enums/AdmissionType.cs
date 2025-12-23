@@ -7,15 +7,19 @@ namespace RefugeConsole.ClassesMetiers.Model.Enums
 {
     internal enum AdmissionType
     {
-        [Description("Abandon")]
-        Abandon,
-        [Description("Décès propriétaire")]
-        DeathOwner,
-        [Description("Errant")]
-        Stray,
-        [Description("Saisie")]
-        Seizure,
-        [Description("Retour adoption")]
-        ReturnAdoption
+        [Description("abandon")]
+        Abandon = 1,
+        [Description("deces_proprietaire")]
+        DeathOwner = 2,
+        [Description("errant")]
+        Stray = 3,
+        [Description("saisie")]
+        Seizure = 4,
+        [Description("retour_adoption")]
+        ReturnAdoption = 5,
+        [Description("retour_famille_accueil")]
+        ReturnFosterFamily = 6,
+        [Description("inconnu")]
+        Unknown = 0
     }
 }

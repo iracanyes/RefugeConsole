@@ -287,7 +287,7 @@ namespace RefugeConsole.CoucheAccesDB
 
 
 
-        public bool UpdateAddress(Address address, NpgsqlTransaction transaction)
+        public bool UpdateAddress(Address address, NpgsqlTransaction? transaction = null)
         {
             bool result = false;
             NpgsqlCommand? sqlCmd = null;
