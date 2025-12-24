@@ -8,7 +8,9 @@ namespace RefugeConsole.CoucheAccesDB
 {
     internal interface IRefugeDataService
     {
-        bool CreateAdmission(Admission admission);
+        bool HandleAdmission(Admission admission);
+
+        bool CreateAdmission(Admission admission, NpgsqlTransaction transaction );
 
         HashSet<Admission> GetAdmissions();
 
@@ -20,13 +22,25 @@ namespace RefugeConsole.CoucheAccesDB
 
         bool CreateRelease(Release release, NpgsqlTransaction transaction);
 
+        FosterFamily GetFosterFamily(Contact contact, Animal animal);
+
         bool CreateFosterFamily(FosterFamily fosterFamily, NpgsqlTransaction transaction);
+
+        bool UpdateFosterFamily(FosterFamily fosterFamily, NpgsqlTransaction transaction);
 
         HashSet<Adoption> GetAdoptions();
 
-        bool CreateAdoption(Adoption adoption, NpgsqlTransaction transaction);
+        Adoption GetAdoption(Contact contact, Animal animal);
 
-        bool UpdateAdoption(Adoption adoption);
+        bool CreateAdoption(Adoption adoption);
+
+        bool CreateReleaseForAdoption(Adoption adoption, Release release);
+
+        bool UpdateAdoption(Adoption adoption, NpgsqlTransaction? transaction = null);
+
+        Vaccine? GetVaccine(string name);
+
+        Vaccine CreateVaccine(Vaccine vaccine);
 
         bool CreateVaccination(Vaccination vaccination);
 

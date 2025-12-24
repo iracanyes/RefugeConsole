@@ -23,7 +23,7 @@ namespace RefugeConsole.CouchePresentation.ViewModel
             this.compatibilities = animalDataService.GetCompatibilities();
         }
 
-        public Animal? GetAnimalByName()
+        public Animal GetAnimalByName()
         {
             Animal? animalInfo = null;
 
@@ -59,7 +59,7 @@ namespace RefugeConsole.CouchePresentation.ViewModel
                 {
                     Console.WriteLine($"Animal with name '{name}' not found!");
                     SharedView.WaitForKeyPress();
-                    return null;
+                    
                 }
             }
             catch (Exception ex)
@@ -70,7 +70,9 @@ namespace RefugeConsole.CouchePresentation.ViewModel
 
             }
 
-            return animalInfo;
+            
+
+            return animalInfo!;
         }
 
 

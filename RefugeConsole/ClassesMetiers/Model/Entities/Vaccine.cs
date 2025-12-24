@@ -9,6 +9,11 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
     internal class Vaccine
     {
         private static readonly ILogger MyLogger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger(nameof(Vaccine));
+
+        public Vaccine(string name)
+            : this(Guid.NewGuid(), name)
+        { }
+
         public Vaccine(Guid id, string name) { 
             this.Id = id;
             this.Name = name;
@@ -16,6 +21,7 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
 
         [Key]
         public Guid Id { get; private set; }
+
         [Required]
         public string Name { get; set; }
 

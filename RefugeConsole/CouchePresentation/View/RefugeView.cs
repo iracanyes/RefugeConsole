@@ -25,7 +25,7 @@ namespace RefugeConsole.CouchePresentation.View
                 Coleurs = [{string.Join(", ", admission.Animal.AnimalColors.Select(ac => ac.Color.Name).ToList())}]
                 Date de naissance : {admission.Animal.BirthDate}
                 Date de décès : {admission.Animal.DeathDate}
-                Stérilisé : {(admission.Animal.IsSterilized ? "Oui" : "Non") }
+                Stérilisé : {(admission.Animal.IsSterilized ? "Oui" : "Non")}
                 Date stérilisation :  {admission.Animal.DateSterilization}
                 Particularité :
                 {admission.Animal.Particularity}
@@ -39,7 +39,7 @@ namespace RefugeConsole.CouchePresentation.View
                 N° de registre national : {admission.Contact.RegistryNumber}
                 Email : {admission.Contact.Email}
                 ============================================================
-                """    
+                """
             );
         }
 
@@ -124,6 +124,133 @@ namespace RefugeConsole.CouchePresentation.View
             );
         }
 
+        public static void DisplayReleaseForAdoption(Release release, Adoption adoption)
+        {
+            string address = $"{adoption.Contact.Address.Street}, {adoption.Contact.Address.City}, {adoption.Contact.Address.ZipCode} {adoption.Contact.Address.State}, {adoption.Contact.Address.Country}";
+            Console.WriteLine(
+                $"""
+                ============================================================
+                Adoption ID : {adoption.Id}
+                ============================================================
+                Créé le : {adoption.DateCreated}
+                Statut : {adoption.Status}
+                Début : {adoption.DateStart}
+
+                Sortie
+                ========
+                Raison : {release.Reason}
+                Crée le : {release.DateCreated}
+                
+                Animal
+                =======
+                Nom : {adoption.Animal.Name}
+                Type :  {adoption.Animal.Type}
+                Sexe : {adoption.Animal.Gender}
+                Coleurs = [{string.Join(", ", adoption.Animal.AnimalColors.Select(ac => ac.Color.Name).ToList())}]
+                Date de naissance : {adoption.Animal.BirthDate}
+                Date de décès : {adoption.Animal.DeathDate}
+                Stérilisé : {(adoption.Animal.IsSterilized ? "Oui" : "Non")}
+                Date stérilisation :  {adoption.Animal.DateSterilization}
+                Particularité :
+                {adoption.Animal.Particularity}
+                Description : 
+                {adoption.Animal.Description}
+
+                Adoptant 
+                ==========
+                Nom: {adoption.Contact.Firstname}
+                Prenom :  {adoption.Contact.Lastname}
+                N° de registre national : {adoption.Contact.RegistryNumber}
+                Email : {adoption.Contact.Email}
+                GSM : {adoption.Contact.MobileNumber}
+                Adresse : {address}
+                ============================================================
+                """
+            );
+        }
+
+        public static void DisplayAdoption(Adoption adoption)
+        {
+            string address = $"{adoption.Contact.Address.Street}, {adoption.Contact.Address.City}, {adoption.Contact.Address.ZipCode} {adoption.Contact.Address.State}, {adoption.Contact.Address.Country}";
+            Console.WriteLine(
+                $"""
+                ============================================================
+                Adoption ID : {adoption.Id}
+                ============================================================
+                Créé le : {adoption.DateCreated}
+                Statut : {adoption.Status}
+                Début : {adoption.DateStart}
+                
+                Animal
+                =======
+                Nom : {adoption.Animal.Name}
+                Type :  {adoption.Animal.Type}
+                Sexe : {adoption.Animal.Gender}
+                Coleurs = [{string.Join(", ", adoption.Animal.AnimalColors.Select(ac => ac.Color.Name).ToList())}]
+                Date de naissance : {adoption.Animal.BirthDate}
+                Date de décès : {adoption.Animal.DeathDate}
+                Stérilisé : {(adoption.Animal.IsSterilized ? "Oui" : "Non")}
+                Date stérilisation :  {adoption.Animal.DateSterilization}
+                Particularité :
+                {adoption.Animal.Particularity}
+                Description : 
+                {adoption.Animal.Description}
+
+                Adoptant 
+                ===================
+                Nom: {adoption.Contact.Firstname}
+                Prenom :  {adoption.Contact.Lastname}
+                N° de registre national : {adoption.Contact.RegistryNumber}
+                Email : {adoption.Contact.Email}
+                GSM : {adoption.Contact.MobileNumber}
+                Adresse : {address}
+                ============================================================
+                """
+            );
+        }
+
+
+        public static void DisplayVaccination(Vaccination vaccination)
+        {
+            
+            Console.WriteLine(
+                $"""
+                ============================================================
+                Vaccination ID : {vaccination.Id}
+                ============================================================
+                Créé le : {vaccination.DateCreated}
+                Date de vaccination : {vaccination.DateVaccination}
+                Fait : {(vaccination.Done ? "Oui" : "Non")}
+                
+                Animal
+                =======
+                Nom : {vaccination.Animal.Name}
+                Type :  {vaccination.Animal.Type}
+                Sexe : {vaccination.Animal.Gender}
+                Coleurs = [{string.Join(", ", vaccination.Animal.AnimalColors.Select(ac => ac.Color.Name).ToList())}]
+                Date de naissance : {vaccination.Animal.BirthDate}
+                Date de décès : {vaccination.Animal.DeathDate}
+                Stérilisé : {(vaccination.Animal.IsSterilized ? "Oui" : "Non")}
+                Date stérilisation :  {vaccination.Animal.DateSterilization}
+                Particularité :
+                {vaccination.Animal.Particularity}
+                Description : 
+                {vaccination.Animal.Description}
+
+                Vaccin 
+                =======
+                Nom: {vaccination.Vaccine.Name}
+                ============================================================
+                """
+            );
+        }
+
+
+
 
     }
+
+
 }
+
+   

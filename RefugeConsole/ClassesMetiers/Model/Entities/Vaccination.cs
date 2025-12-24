@@ -8,27 +8,32 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
     internal class Vaccination
     {
         // Constructor used by EntityFramework
-        public Vaccination(DateOnly dateVaccination, bool done, Animal animal, Vaccine vaccin)
-            : this(Guid.NewGuid(), dateVaccination, done, animal, vaccin)
+        public Vaccination(DateOnly dateVaccination, bool done, Animal animal, Vaccine vaccine)
+            : this(Guid.NewGuid(), DateTime.Now, dateVaccination, done, animal, vaccine)
         { }
 
-        public Vaccination(Guid id, DateOnly dateVaccination, bool done, Animal animal, Vaccine vaccin) {
+        public Vaccination(Guid id, DateTime dateCreated, DateOnly dateVaccination, bool done, Animal animal, Vaccine vaccine) {
             ArgumentNullException.ThrowIfNull(animal, nameof(animal));
-            ArgumentNullException.ThrowIfNull(vaccin, nameof(vaccin));
+            ArgumentNullException.ThrowIfNull(vaccine, nameof(vaccine));
 
             this.Id = id;
+            this.DateCreated = dateCreated;
             this.DateVaccination = dateVaccination;
             this.Done = done;
 
             this.Animal = animal;
             this.AnimalId = animal.Id;
 
-            this.Vaccin = vaccin;
-            this.VaccinId = vaccin.Id;
+            this.Vaccine = vaccine;
+            this.VaccineId = vaccine.Id;
         }
 
         [Key]
         public Guid Id { get; private set; }
+
+        [Required]
+        public DateTime DateCreated { get; set; }
+
         [Required]
         public DateOnly DateVaccination { get; set; }
         [Required]
@@ -37,18 +42,19 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
         public string AnimalId {  get; set; }
         public Animal Animal { get; set; }
         [Required]
-        public Guid VaccinId { get; set; }
+        public Guid VaccineId { get; set; }
 
-        public Vaccine Vaccin { get; set; }
+        public Vaccine Vaccine { get; set; }
 
         public override string ToString()
         {
             return string.Format(
-                "Vaccination{{ id = {0}, dateVaccination = {1}, done = {2}, vaccin = {3} animal = {4} }}",
+                "Vaccination{{ id = {0}, dateCreated = {1}, dateVaccination = {2}, done = {3}, vaccin = {4} animal = {5} }}",
                 this.Id,
+                this.DateCreated,
                 this.DateVaccination,
                 this.Done,
-                this.Vaccin,
+                this.Vaccine,
                 this.Animal
             );
         }

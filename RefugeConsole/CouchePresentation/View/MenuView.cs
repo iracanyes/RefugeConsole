@@ -126,20 +126,20 @@ namespace RefugeConsole.CouchePresentation.View
                 case RefugeMenu.ListReleaseInFosterFamily:
                     refugeViewModel.ListReleaseInFosterFamily();
                     break;
-                case RefugeMenu.AddCandidate:
-                    refugeViewModel.AddCandidate();
+                case RefugeMenu.AddAdoption:
+                    refugeViewModel.CreateAdoption();
                     break;
                 case RefugeMenu.ReleaseToFosterFamily:
                     refugeViewModel.ReleaseToFosterFamily();
                     break;
-                case RefugeMenu.ListReleaseAdoptionWithStatus:
-                    refugeViewModel.ListReleaseAdoptionWithStatus();
+                case RefugeMenu.ListAdoptionWithStatus:
+                    refugeViewModel.ListAdoptionWithStatus();
                     break;
                 case RefugeMenu.ReleaseForAdoption:
                     refugeViewModel.ReleaseForAdoption();
                     break;
-                case RefugeMenu.UpdateReleaseForAdoption:
-                    refugeViewModel.UpdateReleaseForAdoption();
+                case RefugeMenu.UpdateAdoptionStatus:
+                    refugeViewModel.UpdateAdoptionStatus();
                     break;
                 case RefugeMenu.AddVaccination:
                     refugeViewModel.AddVaccination();

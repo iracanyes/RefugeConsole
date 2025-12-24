@@ -9,12 +9,12 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
 {
     internal class Adoption
     {
-        public Adoption(ApplicationStatus status, DateTime dateCreated, DateOnly dateStart, DateOnly dateEnd, Contact contact, Animal animal)
+        public Adoption(ApplicationStatus status, DateTime dateCreated, DateOnly dateStart, DateOnly? dateEnd, Contact contact, Animal animal)
             : this(Guid.NewGuid(), status, dateCreated, dateStart, dateEnd, contact, animal)
         {
         }
 
-        public Adoption(Guid id, ApplicationStatus status, DateTime dateCreated, DateOnly dateStart, DateOnly dateEnd, Contact contact, Animal animal)
+        public Adoption(Guid id, ApplicationStatus status, DateTime dateCreated, DateOnly dateStart, DateOnly? dateEnd, Contact contact, Animal animal)
         {
             ArgumentNullException.ThrowIfNull(contact, nameof(contact));
             ArgumentNullException.ThrowIfNull(animal, nameof(animal));
