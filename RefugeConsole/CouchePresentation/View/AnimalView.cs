@@ -34,7 +34,7 @@ namespace RefugeConsole.CouchePresentation.View
 
                     colorsNames.Remove(colorName);
 
-                    addMoreColor = SharedView.InputBoolean($"Voulez-vous ajouter une couleur pour l'animal ({animal.Name})");
+                    addMoreColor = SharedView.InputBoolean($"Voulez-vous ajouter une couleur pour l'animal ({animal.Name}) ? (Oui/Non)");
 
 
                 } while (addMoreColor);
@@ -71,7 +71,7 @@ namespace RefugeConsole.CouchePresentation.View
             bool isAlive = SharedView.InputBoolean("Est-il vivant?");
             DateOnly? deathDate = null;
             if (!isAlive) {
-                deathDate = SharedView.InputDateOnly("Entrez la date de décès de l'animal : ");
+                deathDate = SharedView.InputDateOnly("Entrez la date de décès de l'animal : ", birthDate, DateComparator.GreaterThan);
             }
 
             // 
@@ -87,7 +87,7 @@ namespace RefugeConsole.CouchePresentation.View
 
                 if (isSterilizationDateKnown)
                 {
-                    dateSterilization = SharedView.InputDateOnly($"Entrez la date de stérilisation de l'animal?");
+                    dateSterilization = SharedView.InputDateOnly($"Entrez la date de stérilisation de l'animal?", birthDate, DateComparator.GreaterThan);
                 }
             }
         

@@ -47,6 +47,7 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
             {
                 if (DateStart > value)
                     throw new ArgumentOutOfRangeException("End date can't be before start date!");
+
                 field = value;
             }
         }

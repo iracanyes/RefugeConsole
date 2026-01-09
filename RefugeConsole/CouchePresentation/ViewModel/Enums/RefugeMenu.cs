@@ -19,12 +19,10 @@ namespace RefugeConsole.CouchePresentation.ViewModel.Enums
         ListAdoptionWithStatus = 5,
         [Description("Ajouter une adoption (Candidature)")]
         AddAdoption = 6,
-        [Description("Valider une adoption")]
-        ReleaseForAdoption = 7,
         [Description("Modifier le statut d'une adoption")]
-        UpdateAdoptionStatus = 8,
+        UpdateAdoptionStatus = 7,
         [Description("Ajouter un vaccin à un animal")]
-        AddVaccination = 9,
+        AddVaccination = 8,
         [Description("Retour menu principal")]
         Exit = 10,
         Unkown = 0,

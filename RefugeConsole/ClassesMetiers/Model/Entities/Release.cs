@@ -9,21 +9,26 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
 {
     internal class Release
     {
-        public Release(ReleaseType reason, DateTime dateCreated, Contact contact, Animal animal)
-            : this(Guid.NewGuid(), reason, dateCreated, contact, animal) 
+        public Release(ReleaseType reason, DateTime dateCreated, Animal animal, Contact? contact = null)
+            : this(Guid.NewGuid(), reason, dateCreated, animal, contact) 
         { }
 
-        public Release(Guid id, ReleaseType reason, DateTime dateCreated, Contact contact, Animal animal)
+        public Release(Guid id, ReleaseType reason, DateTime dateCreated, Animal animal, Contact? contact = null)
         {
-            ArgumentNullException.ThrowIfNull(contact, nameof(contact));
+            
             ArgumentNullException.ThrowIfNull(animal, nameof(animal));
 
             this.Id = id;
             this.Reason = MyEnumHelper.GetEnumDescription<ReleaseType>(reason);
             this.DateCreated = dateCreated;
 
-            this.ContactId = contact.Id;
-            this.Contact = contact;
+            if(contact != null)
+            {
+                this.ContactId = contact.Id;
+                this.Contact = contact;
+
+            }
+            
 
             this.AnimalId = animal.Id;
             this.Animal = animal;
@@ -38,9 +43,9 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
         [Required]
         public DateTime DateCreated { get; set; }
 
-        [Required]
-        public Guid ContactId { get; set; }
-        public Contact Contact { get; set; }
+        
+        public Guid? ContactId { get; set; }
+        public Contact? Contact { get; set; }
 
         [Required]
         public string AnimalId { get; set; }

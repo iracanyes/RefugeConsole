@@ -70,7 +70,7 @@ namespace RefugeConsole.CouchePresentation.View
                     animalViewModel.ViewAnimal();
                     break;
                 case AnimalMenu.UpdateAnimal:
-                    animalViewModel.UpdateAnimal();
+                    refugeViewModel.UpdateAdmission();
                     break;
                 case AnimalMenu.DeleteAnimal:
                     animalViewModel.RemoveAnimal();
@@ -134,9 +134,6 @@ namespace RefugeConsole.CouchePresentation.View
                     break;
                 case RefugeMenu.ListAdoptionWithStatus:
                     refugeViewModel.ListAdoptionWithStatus();
-                    break;
-                case RefugeMenu.ReleaseForAdoption:
-                    refugeViewModel.ReleaseForAdoption();
                     break;
                 case RefugeMenu.UpdateAdoptionStatus:
                     refugeViewModel.UpdateAdoptionStatus();

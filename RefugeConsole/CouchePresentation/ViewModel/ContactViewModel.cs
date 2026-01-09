@@ -24,36 +24,56 @@ namespace RefugeConsole.CouchePresentation.ViewModel
             this.roles = contactDataService.GetRoles();
         }
 
+        /**
+         * <summary>
+         *  Fonctionnalité : Ajouter un rôle à une personne de contact
+         * </summary>
+         * <param name="contact">
+         *  Personne de contact
+         * </param>
+         */
         public void AddContactRole(Contact contact)
         {
             Console.WriteLine("Ajouter un rôle à un contact : ");
             try
             {
-
+                // Sélection par l'utilisateur d'un rôle pour la personne de contact
                 RoleNameType roleName = SharedView.EnumChoice<RoleNameType>("Sélectionner le rôle désiré : ");
                 
+                // Récupération du rôle en base de donnée
                 Role role = roles.First(r => r.Name == MyEnumHelper.GetEnumDescription<RoleNameType>(roleName));
 
+                // Ajout du rôle pour la personne de contact
                 contact.AddContactRole(new ContactRole(contact, role));
             }
             catch (Exception ex)
             {
+                Console.Error.WriteLine($"Unable to add a role to a contact.Role name : {contact}. Exception message : {ex.Message}.\nException : {ex}");
+
                 if (Debugger.IsAttached)
                     Debug.WriteLine($"Unable to add a role to a contact.Role name : {contact}. Exception message : {ex.Message}.\nException : {ex}");
                 throw new Exception($"Unable to add a role to a contact.Role name : {contact}. Exception message : {ex.Message}.\nException : {ex}");
             }
         }
 
+        /**
+         * <summary>
+         *  Fonctionnalité : Ajouter une adresse à une personne de contact
+         * </summary>
+         * <param name="contact">
+         *  Personne de contact
+         * </param>
+         */
         public void AddAdress(Contact contact)
         {
            
             try
             {
 
-                // Save address
+                // Sauvegarde de l'adresse de la personne de contact
                 bool result = contactDataService.CreateAddress(contact.Address);
 
-                // Attach new address to contact
+                // Si erreur inconnu
                 if (!result)
                 {
                     throw new Exception($"Unknown error while saving an address into DB.");
@@ -71,52 +91,92 @@ namespace RefugeConsole.CouchePresentation.ViewModel
             }
         }
 
+        /**
+         * <summary>
+         *  Fonctionnalité : Consulter une personne de contact
+         * </summary>
+         */
         public void ViewContact() {
             try
             {
+                // Saisie par l'utilisateur du numéro de registre national
                 string registryNumber = SharedView.InputString("Entrez le numéro de registre national de la personne de contact : ");
 
-                // Get contact 
+                // Récupération de la personne de contact
                 Contact contactInfo = contactDataService.GetContactByRegistryNumber(registryNumber);
                 
+                // Affichage
                 ContactView.DisplayContactInfo(contactInfo);
 
 
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Unable to add contact info!\nReason : {ex.Message}\nException : \n{ex}");
+                Console.Error.WriteLine($"Unable to add contact info!\nReason : {ex.Message}\nException : \n{ex}");
+                
+                if(Debugger.IsAttached)
+                    Debug.WriteLine($"Unable to add contact info!\nReason : {ex.Message}\nException : \n{ex}");
+                
                 throw new Exception($"Unable to add contact info!\nReason : {ex.Message}\nException : \n{ex}");
             }
+
+            // Saisie par l'utilisateur d'une touche pour continuer
+            SharedView.WaitForKeyPress();
         }
 
+        /**
+         * <summary>
+         *  Fonctionnalité : Ajouter une personne de contact
+         * </summary>
+         */
         public Contact AddContact() {
+            Contact? contactInfoData = null;
             Contact? result = null;
             bool addRole = false;
-            
+            bool correctInfo = false;
+
+            // Raffraichir l'écran
+            Console.Clear();
+            Console.WriteLine("Ajouter une personne de contact\n=======================================\n\n");
+
             try
             {
-                // Capture user input for a contact instance and address
-                Contact contactInfoData = ContactView.AddContactInfo();
+                do {
+                    // Saisie par l'utilisateur des informatiosn de la personne de contact
+                    contactInfoData = ContactView.AddContactInfo();
 
-                // Save the address 
+                    if (contactInfoData == null) continue;
+
+                    // Contrainte : Numéro de registre national unique!
+                    if (!this.contactDataService.RegistryNumberExists(contactInfoData.RegistryNumber))
+                    {
+                        correctInfo = true;
+                    }
+                } while (!correctInfo);
+
+
+                if (contactInfoData == null)
+                    throw new Exception("Unexpected error while receiving contact's info from user");
+
+
+                // Sauvegarde de l'adresse
                 this.AddAdress(contactInfoData);
                
-                // Add roles to the contact 
+                // Ajout des rôles de la personne de contact
                 do
                 {
                     this.AddContactRole(contactInfoData);
-                    addRole = SharedView.InputBoolean("Voulez-vous ajouter un rôle à la personne de contact?");
+                    addRole = SharedView.InputBoolean("Voulez-vous ajouter un rôle à la personne de contact? (§Oui/Non)");
 
                 } while (addRole);
 
-                // Save new contact
+                // Sauvegarde de la personne de contact
                 result = contactDataService.CreateContact(contactInfoData);
 
+                // Affichage de la personne de contact
                 ContactView.DisplayContactInfo(result);
 
-                // Lock screen until key press
-                SharedView.WaitForKeyPress();
+               
 
 
             }catch(Exception ex)
@@ -125,57 +185,92 @@ namespace RefugeConsole.CouchePresentation.ViewModel
                 throw new Exception($"Unable to add contact info!\nReason : {ex.Message}\nException : \n{ex}");
             }
 
+            // Saisie d'une touche pour continuer
+            SharedView.WaitForKeyPress();
+
+            // Raffraichir l'écran
+            Console.Clear();
+
             return result;
         }
 
+        /**
+         * <summary>
+         *  Fonctionnalité : Mettre à jour une personne de contact
+         * </summary>
+         */
         public void UpdateContact() {
+            // Raffraichir l'écran
+            Console.Clear();
+            Console.WriteLine("Mettre à jour une personne de contact\n=======================================\n\n");
+
             try
             {
-                // Get national registry number
+                // Saisie par l'utilisateur du numéro de registre national de la personne de contact
                 string registryNumber = SharedView.InputString("Entrez le numéro de registre national de la personne de contact : ");
 
-                // Get contact info by registry number
+                // Récupération de la personne de contact par son numéro de registre national
                 Contact contactInfo = contactDataService.GetContactByRegistryNumber(registryNumber);
 
-                // Get updated contact info from user input
+                // Saisie des informations mises à jour pour la personne de contact
                 Contact contactInfoDataToUpdate = ContactView.UpdateContactInfo(contactInfo);
 
-                // Save updated contact info 
+                // Sauvegarde des nouvelles informations
                 Contact contactInfoUpdated = contactDataService.UpdateContact(contactInfoDataToUpdate);
 
+                // Affichage des informations mises à jour de la personne de contact
                 ContactView.DisplayContactInfo(contactInfoUpdated);
 
 
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Unable to add contact info!\nReason : {ex.Message}\nException : \n{ex}");
-                throw new Exception($"Unable to add contact info!\nReason : {ex.Message}\nException : \n{ex}");
+                Console.Error.WriteLine($"Unable to add contact info!\nReason : {ex.Message}\nException : \n{ex}"); 
+
+                if(Debugger.IsAttached)
+                    Debug.WriteLine($"Unable to add contact info!\nReason : {ex.Message}\nException : \n{ex}");
             }
+
+            // Saisie d'une touche pour continuer
+            SharedView.WaitForKeyPress();
         }
 
+        /**
+         * <summary>
+         *  Fonctionnalité : Supprimer une personne de contact
+         * </summary>
+         */
         public void RemoveContact() {
+            // Raffraichir l'écran
+            Console.Clear();
+            Console.WriteLine("Supprimer une personne de contact\n=======================================\n\n");
+
             try
             {
-                // Get national registry number
+                // Saisie par l'utilisateur du numéro de registre national de la personne de contact
                 string registryNumber = SharedView.InputString("Entrez le numéro de registre national de la personne de contact : ");
 
-                // Get contact info by registry number
+                // Récupération de la personne de contact par son numéro de registre national
                 Contact contactInfo = contactDataService.GetContactByRegistryNumber(registryNumber);
 
-                // Save updated contact info 
+                // Supprimer la personne de contact en base de données
                 bool result = contactDataService.DeleteContact(contactInfo);
 
                 if(result)
                     Console.WriteLine($"Le contact avec le numéro de registre national ({registryNumber}) a été supprimé!") ;
 
-                SharedView.WaitForKeyPress();
+                
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Unable to add contact info!\nReason : {ex.Message}\nException : \n{ex}");
-                throw new Exception($"Unable to add contact info!\nReason : {ex.Message}\nException : \n{ex}");
+                if(Debugger.IsAttached)
+                    Debug.WriteLine($"Unable to add contact info!\nReason : {ex.Message}\nException : \n{ex}");
+
+                Console.Error.WriteLine($"Unable to add contact info!\nReason : {ex.Message}\nException : \n{ex}");
             }
+
+            // Saisie d'une touche pour continuer
+            SharedView.WaitForKeyPress();
         }
     }
 }

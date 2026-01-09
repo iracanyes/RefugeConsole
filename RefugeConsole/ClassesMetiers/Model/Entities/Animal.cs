@@ -81,13 +81,50 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
         public string Gender { get; set; }
         
         
-        public DateOnly? BirthDate { get; set; }
+        public DateOnly? BirthDate 
+        { 
+            get;
 
-        public DateOnly? DeathDate { get; set; }
+            set {
+                // Contrainte : Date de naissance doit être supérieur ou égal à la date courante
+                if (value > DateOnly.FromDateTime(DateTime.Now))
+                    throw new ArgumentOutOfRangeException("Birthdate must be less or equal to the current date");
+
+                field = value;
+            } 
+        }
+
+        public DateOnly? DeathDate
+        {
+            get;
+
+            set
+            {
+                // Contrainte : Date de décès d’un animal est soit nulle ou soit supérieure à sa date de naissance
+                if (value != null && value <= this.BirthDate)
+                    throw new Exception("DeathDate must be greater than BirthDate");
+
+                field = value;
+            }
+
+        }
+
         [Required]
         public Boolean IsSterilized { get; set; }
 
-        public DateOnly? DateSterilization { get; set; }
+        public DateOnly? DateSterilization { 
+            get;
+
+            set
+            {
+                // Contrainte : La date de stérilisation est soit nulle ou soit supérieure à sa date de naissance
+                if (value != null && value <= this.BirthDate)
+                    throw new Exception("DateSterilization must be greater than BirthDate");
+
+                field = value;
+            } 
+        
+        }
 
         public string Particularity { get; set; }
 

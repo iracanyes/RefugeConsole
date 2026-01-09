@@ -14,7 +14,7 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
         private static readonly ILogger MyLogger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger(nameof(Contact));
 
         /*================ Constructeurs =========================================*/
-        public Contact(Guid id, string firstname,  string lastname, string registryNumber, string email, string phoneNumber, string mobileNumber, Address address)
+        public Contact(Guid id, string firstname,  string lastname, string registryNumber, string? email, string? phoneNumber, string? mobileNumber, Address address)
         {
 
             ArgumentNullException.ThrowIfNull(address, nameof(address));
@@ -25,7 +25,6 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
             this.Lastname = lastname;
             this.RegistryNumber = registryNumber;
             this.Email = email;
-            this.Address = address;
             this.PhoneNumber = phoneNumber;
             this.MobileNumber = mobileNumber;
 
@@ -63,13 +62,13 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
         public string RegistryNumber { get; set; }
         
         
-        [Required]
-        public string Email { get; set; }
+        
+        public string? Email { get; set; }
 
-        public string PhoneNumber { get; set; }
+        public string? PhoneNumber { get; set; }
 
-        [Required]
-        public string MobileNumber { get; set; }
+        
+        public string? MobileNumber { get; set; }
         
         [Required]
         public Guid AddressId { get; set; }

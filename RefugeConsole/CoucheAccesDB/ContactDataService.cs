@@ -154,9 +154,9 @@ namespace RefugeConsole.CoucheAccesDB
                 sqlCmd.Parameters["firstname"].Value = contact.Firstname;
                 sqlCmd.Parameters["lastname"].Value = contact.Lastname;
                 sqlCmd.Parameters["registryNumber"].Value = contact.RegistryNumber;
-                sqlCmd.Parameters["email"].Value = contact.Email;
-                sqlCmd.Parameters["phoneNumber"].Value = contact.PhoneNumber;
-                sqlCmd.Parameters["mobileNumber"].Value = contact.MobileNumber;
+                sqlCmd.Parameters["email"].Value = contact.Email != null ? contact.Email : DBNull.Value;
+                sqlCmd.Parameters["phoneNumber"].Value = contact.PhoneNumber != null ? contact.PhoneNumber : DBNull.Value;
+                sqlCmd.Parameters["mobileNumber"].Value = contact.MobileNumber != null ? contact.MobileNumber : DBNull.Value;
                 sqlCmd.Parameters["addressId"].Value = contact.AddressId;
 
                 int nbRowAffected = sqlCmd.ExecuteNonQuery();
@@ -393,9 +393,9 @@ namespace RefugeConsole.CoucheAccesDB
                 sqlCmd.Parameters["firstname"].Value = contact.Firstname;
                 sqlCmd.Parameters["lastname"].Value = contact.Lastname;
                 sqlCmd.Parameters["registryNumber"].Value = contact.RegistryNumber;
-                sqlCmd.Parameters["email"].Value = contact.Email;
-                sqlCmd.Parameters["phoneNumber"].Value = contact.PhoneNumber;
-                sqlCmd.Parameters["mobileNumber"].Value = contact.MobileNumber;
+                sqlCmd.Parameters["email"].Value = contact.Email != null ? contact.Email : DBNull.Value;
+                sqlCmd.Parameters["phoneNumber"].Value = contact.PhoneNumber != null ? contact.PhoneNumber : DBNull.Value;
+                sqlCmd.Parameters["mobileNumber"].Value = contact.MobileNumber != null ? contact.MobileNumber : DBNull.Value;
                 sqlCmd.Parameters["addressId"].Value = contact.AddressId;
 
                 int nbRowAffected = sqlCmd.ExecuteNonQuery();
@@ -696,6 +696,7 @@ namespace RefugeConsole.CoucheAccesDB
             }
             catch (Exception ex)
             {
+                Console.Error.WriteLine(ex.Message);
 
                 if (reader != null) reader.Close();
 
@@ -710,6 +711,66 @@ namespace RefugeConsole.CoucheAccesDB
 
             return contact.ContactRoles;
 
+        }
+
+        /**
+         * 
+         * 
+         */
+        public bool RegistryNumberExists(string registryNumber)
+        {
+            bool result = false;
+            NpgsqlCommand? sqlCmd = null;
+            NpgsqlDataReader? reader = null;
+
+            try
+            {
+                sqlCmd = new NpgsqlCommand(
+                    """
+                    SELECT EXISTS(
+                        SELECT 1
+                        FROM public."Contacts"
+                        WHERE "RegistryNumber" = :registryNumber
+                        LIMIT 1
+                    )
+                    """,
+                    this.SqlConn
+                );
+
+                sqlCmd.Parameters.Add(new NpgsqlParameter("registryNumber", NpgsqlTypes.NpgsqlDbType.Text));
+
+                sqlCmd.Prepare();
+
+                sqlCmd.Parameters["registryNumber"].Value = registryNumber;
+
+                reader = sqlCmd.ExecuteReader();
+
+                if (reader.Read())
+                {
+                    result = Convert.ToBoolean(reader["exists"]);
+                }
+
+                // Close reader 
+                reader.Close();
+
+
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine(ex.Message);
+
+                if (reader != null) reader.Close();
+
+                if (Debugger.IsAttached)
+                    Debug.WriteLine($"Error while retrieving contact's roles from DB. Error : {ex.Message}. Exception: {ex}");
+
+                if (sqlCmd != null)
+                    throw new AccessDbException(sqlCmd.CommandText, $"Error while retrieving contact's roles from DB. Error : {ex.Message}. Exception: {ex}");
+                else
+                    throw new AccessDbException("sqlCmd is NULL", $"Error while retrieving contact's roles from DB. Error : {ex.Message}. Exception: {ex}");
+            }
+
+            return result;
         }
 
 

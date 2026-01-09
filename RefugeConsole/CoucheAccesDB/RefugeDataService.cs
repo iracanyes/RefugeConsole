@@ -15,13 +15,20 @@ namespace RefugeConsole.CoucheAccesDB
 {
     internal class RefugeDataService: AccessDb, IRefugeDataService
     {
-        public bool HandleAdmission(Admission admission)
+        /**
+         * <summary>
+         *  Gère l'ajout d'une admission pour un animal
+         * </summary>
+         */ 
+        public bool HandleCreateAdmission(Admission admission)
         {
             bool result = false;
             NpgsqlTransaction transaction = this.SqlConn.BeginTransaction();
 
             try
             {
+                // Si c'est un retour adoption, enregistrement de la date de fin de l'adoption
+
                 if(admission.Reason == MyEnumHelper.GetEnumDescription<AdmissionType>(AdmissionType.ReturnAdoption))
                 {
                     Adoption adoption = this.GetAdoption(admission.Contact, admission.Animal);
@@ -30,16 +37,23 @@ namespace RefugeConsole.CoucheAccesDB
                     result = this.UpdateAdoption(adoption, transaction);
                 }
 
+                // Si c'est un retour de famille d'accueil, enregistrer la date de fin de l'accueil
                 if(admission.Reason == MyEnumHelper.GetEnumDescription<AdmissionType>(AdmissionType.ReturnFosterFamily))
                 {
                     FosterFamily ff = this.GetFosterFamily(admission.Contact, admission.Animal);
+
+                    if (ff == null)
+                        throw new Exception("Foster family not found!");
+
                     ff.DateEnd = DateOnly.FromDateTime(DateTime.Now);
 
                     result = this.UpdateFosterFamily(ff, transaction);
                 }
 
+                // Sauvegarder la nouvelle admission 
                 result = this.CreateAdmission(admission, transaction);
 
+                // Clôture de la transaction avec la base de donnée
                 transaction.Commit();
 
                 
@@ -57,6 +71,8 @@ namespace RefugeConsole.CoucheAccesDB
 
             return result;
         }
+
+
         public bool CreateAdmission(Admission admission, NpgsqlTransaction transaction)
         {
             bool result = false;
@@ -505,13 +521,19 @@ namespace RefugeConsole.CoucheAccesDB
 
             try
             {
+                // Sauvegarde de la sortie
                 bool releaseSaved = this.CreateRelease(release, transaction);
 
+                // Sauvegarde de la famille d'accueil
                 bool fosterFamilySaved = this.CreateFosterFamily(fosterFamily, transaction);
 
-                // Commit transaction to DB
-                if(releaseSaved && fosterFamilySaved) 
+                // Valider la transaction en DB
+                if(releaseSaved && fosterFamilySaved)
+                {
                     transaction.Commit();
+                    result = true;
+                }
+                    
 
 
             }
@@ -529,7 +551,7 @@ namespace RefugeConsole.CoucheAccesDB
             return result;
         }
 
-        public bool CreateRelease(Release release, NpgsqlTransaction transaction)
+        public bool CreateRelease(Release release, NpgsqlTransaction? transaction = null)
         {
             bool result = false;
             NpgsqlCommand? sqlCmd = null;
@@ -1165,13 +1187,19 @@ namespace RefugeConsole.CoucheAccesDB
 
             try
             {
+                // Sauvegarde de la sortie
                 bool releaseSaved = this.CreateRelease(release, transaction);
 
+                // Sauvegarde de l'adoption
                 bool adoptionSaved = this.UpdateAdoption(adoption, transaction);
 
                 // Commit transaction to DB
                 if (releaseSaved && adoptionSaved)
+                {
                     transaction.Commit();
+                    result = true;
+                }
+                    
 
 
             }
@@ -1342,6 +1370,9 @@ namespace RefugeConsole.CoucheAccesDB
             return result;
         }
 
+        /**
+         * Créer une vaccination 
+         */ 
         public bool CreateVaccination(Vaccination vaccination)
         {
             bool result = false;
@@ -1369,7 +1400,7 @@ namespace RefugeConsole.CoucheAccesDB
 
                 sqlCmd.Parameters["id"].Value = vaccination.Id;
                 sqlCmd.Parameters["dateCreated"].Value = vaccination.DateCreated.ToUniversalTime();
-                sqlCmd.Parameters["dateVaccination"].Value = vaccination.DateVaccination;
+                sqlCmd.Parameters["dateVaccination"].Value = vaccination.DateVaccination != null ? vaccination.DateVaccination : DBNull.Value ;
                 sqlCmd.Parameters["done"].Value = vaccination.Done;
                 sqlCmd.Parameters["animalId"].Value = vaccination.AnimalId;
                 sqlCmd.Parameters["vaccineId"].Value = vaccination.VaccineId;
@@ -1396,5 +1427,394 @@ namespace RefugeConsole.CoucheAccesDB
 
             return result;
         }
+
+        /**
+         * Vérifie la contrainte  : Date_entree: Un animal ne peut être entrée plus d’une fois depuis une sortie
+         */
+        public bool IsAdmittedSinceLastRelease(string animalId) {
+            bool result = false;
+            DateTime? dateLastRelease = null;
+
+            try
+            {
+                // Get Date of last release if exists
+                dateLastRelease = this.GetDateLastRelease(animalId, DateTime.Now);
+
+                if (dateLastRelease == null)
+                    return false;
+
+                // admission exists since date of last release
+                result = this.AdmissionExistsSinceLastRelease(animalId, (DateTime) dateLastRelease);
+
+
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine(ex.ToString());
+
+                if (Debugger.IsAttached)
+                    Debug.WriteLine($"Error while checking if an animal's admission already exists since last release in DB. Error : {ex.Message}. Exception : {ex}.");
+
+            }
+
+
+            return result;
+            
+        }
+
+        /**
+         * Récupère la date de la dernière sortie de l'animal si elle existe 
+         * 
+         */ 
+        private DateTime? GetDateLastRelease(string animalId, DateTime dateAdmission, ReleaseType? reason = null)
+        {
+            DateTime? result = null;
+            NpgsqlCommand? sqlCmd = null;
+            NpgsqlDataReader? reader = null;
+            StringBuilder sb = new StringBuilder();
+
+            sb.Append("SELECT \"DateCreated\" ")
+                .Append("FROM public.\"Releases\" ")
+                .Append("WHERE \"AnimalId\" = :animalId AND \"DateCreated\" < :dateAdmission ");
+
+            if (reason != null)
+                sb.Append("AND \"Reason\" = :reason ");
+
+            sb.Append("ORDER BY \"DateCreated\" DESC ")
+                .Append("LIMIT 1");
+
+
+            try
+            {
+                
+                sqlCmd = new NpgsqlCommand(
+                    sb.ToString(),
+                    this.SqlConn
+                );
+
+                sqlCmd.Parameters.Add(new NpgsqlParameter("animalId", NpgsqlTypes.NpgsqlDbType.Varchar));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("dateAdmission", NpgsqlTypes.NpgsqlDbType.TimestampTz));
+
+                if (reason != null)
+                    sqlCmd.Parameters.Add(new NpgsqlParameter("reason", NpgsqlTypes.NpgsqlDbType.Text));
+
+                sqlCmd.Prepare();
+
+                sqlCmd.Parameters["animalId"].Value = animalId;
+                sqlCmd.Parameters["dateAdmission"].Value = dateAdmission.ToUniversalTime();
+
+                if (reason != null)
+                    sqlCmd.Parameters["reason"].Value = MyEnumHelper.GetEnumDescription<ReleaseType>( (ReleaseType) reason);
+
+                reader = sqlCmd.ExecuteReader();
+
+                if (reader.Read())
+                {
+                    result = Convert.ToDateTime(reader["DateCreated"])!;
+                }
+
+                reader.Close();
+
+
+
+            }
+            catch (Exception ex)
+            {
+                if (reader != null) { reader.Close(); }
+
+                if (Debugger.IsAttached)
+                    Debug.WriteLine($"Error while checking if an animal's admission already exists since last release in DB. Error : {ex.Message}. Exception : {ex}.");
+
+                if (sqlCmd != null)
+                    throw new AccessDbException(sqlCmd.CommandText, $"Error while checking if an animal's admission already exists since last release in DB. Error : {ex.Message}. Exception : {ex}.");
+                else
+                    throw new AccessDbException("CreateRelease : sqlCmd is null", $"Error while checking if an animal's admission already exists since last release in DB. Error : {ex.Message}. Exception : {ex}.");
+            }
+
+
+            return result;
+        }
+
+        /**
+         * Check if a admission exists for the animal since last release date
+         */ 
+        private bool AdmissionExistsSinceLastRelease(string animalId, DateTime dateLastRelease)
+        {
+            bool result = false;
+            NpgsqlCommand? sqlCmd1 = null;
+            NpgsqlDataReader? reader1 = null;
+
+
+            try
+            {
+                // Get Date of last release if exists
+                sqlCmd1 = new NpgsqlCommand(
+                    """
+                    SELECT EXISTS(
+                        SELECT 1 
+                        FROM public."Admissions"
+                        WHERE "AnimalId" = :animalId AND "DateCreated" > :dateLastRelease
+                        LIMIT 1
+                    )
+                    """,
+                    this.SqlConn
+                );
+
+                sqlCmd1.Parameters.Add(new NpgsqlParameter("animalId", NpgsqlTypes.NpgsqlDbType.Varchar));
+                sqlCmd1.Parameters.Add(new NpgsqlParameter("dateLastRelease", NpgsqlTypes.NpgsqlDbType.TimestampTz));
+
+                sqlCmd1.Prepare();
+
+                sqlCmd1.Parameters["animalId"].Value = animalId;
+                sqlCmd1.Parameters["dateLastRelease"].Value = dateLastRelease.ToUniversalTime();
+
+                reader1 = sqlCmd1.ExecuteReader();
+
+                if (reader1.Read())
+                {
+                    result = Convert.ToBoolean(reader1["exists"])!;
+                }
+
+                reader1.Close();
+
+
+            }
+            catch (Exception ex)
+            {
+                if (reader1 != null) { reader1.Close(); }
+
+                Console.Error.WriteLine(ex.Message);
+
+                if (Debugger.IsAttached)
+                    Debug.WriteLine($"Error while checking if an animal's admission already exists since last release in DB. Error : {ex.Message}. Exception : {ex}.");
+
+                if (sqlCmd1 != null)
+                    throw new AccessDbException(sqlCmd1.CommandText, $"Error while checking if an animal's admission already exists since last release in DB. Error : {ex.Message}. Exception : {ex}.");
+                else
+                    throw new AccessDbException("AdmissionExistsSinceLastRelease : sqlCmd is null", $"Error while checking if an animal's admission already exists since last release in DB. Error : {ex.Message}. Exception : {ex}.");
+            }
+
+
+            return result;
+        }
+
+        /**
+         * Check constraint : Release exists since last admission's date
+         * 
+         * 
+         */
+        public bool IsReleasedSinceLastAdmission(string animalId)
+        {
+            bool result = false;
+            DateTime? dateLastAdmission = null;
+
+            try
+            {
+                // Retrieve date of last admission 
+                dateLastAdmission = this.GetDateLastAdmission(animalId, DateTime.Now);
+
+                if (dateLastAdmission == null)
+                    throw new Exception($"No admission exists for the animal!");
+
+                // Check if a release exists since last admission
+                result = this.ReleaseExistsSinceLastAdmission(animalId, (DateTime) dateLastAdmission);
+
+
+            }
+            catch (Exception ex)
+            {
+
+                Console.Error.WriteLine(ex.Message);
+
+                if (Debugger.IsAttached)
+                    Debug.WriteLine($"Error while checking if an animal's admission already exists since last release in DB. Error : {ex.Message}. Exception : {ex}.");
+            }
+
+            return result;
+
+        }
+
+        /**
+         * Retrieve the last admission's date since a datetime provided for an animal identified by its ID 
+         */ 
+        private DateTime? GetDateLastAdmission(string animalId, DateTime dateAdmission)
+        {
+            DateTime? result = null;
+            NpgsqlCommand? sqlCmd = null;
+            NpgsqlDataReader? reader = null;
+
+            try
+            {
+                sqlCmd = new NpgsqlCommand(
+                    """
+                    SELECT "DateCreated" 
+                    FROM public."Admissions"
+                    WHERE "AnimalId" = :animalId AND "DateCreated" < :dateRelease
+                    ORDER BY "DateCreated" DESC
+                    LIMIT 1
+                    """,
+                    this.SqlConn
+                );
+
+                sqlCmd.Parameters.Add(new NpgsqlParameter("animalId", NpgsqlTypes.NpgsqlDbType.Varchar));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("dateRelease", NpgsqlTypes.NpgsqlDbType.TimestampTz));
+
+
+                sqlCmd.Prepare();
+
+                sqlCmd.Parameters["animalId"].Value = animalId;
+                sqlCmd.Parameters["dateRelease"].Value = dateAdmission.ToUniversalTime();
+
+
+                reader = sqlCmd.ExecuteReader();
+
+                if (reader.Read())
+                {
+                    result = Convert.ToDateTime(reader["DateCreated"]);
+                }
+
+                reader.Close();
+
+
+            }
+            catch (Exception ex)
+            {
+                if (reader != null) { reader.Close(); }
+
+                Console.Error.WriteLine(ex.Message);
+
+                if (Debugger.IsAttached)
+                    Debug.WriteLine($"Error while retrieving last admission's date for an animal in DB. Error : {ex.Message}. Exception : {ex}.");
+
+                if (sqlCmd != null)
+                    throw new AccessDbException(sqlCmd.CommandText, $"Error while retrieving last admission's date for an animal in DB. Error : {ex.Message}. Exception : {ex}.");
+                else
+                    throw new AccessDbException("AdmissionExistsSinceLastRelease : sqlCmd is null", $"Error while retrieving last admission's date for an animal in DB. Error : {ex.Message}. Exception : {ex}.");
+            }
+
+            return result;
+        }
+
+        /**
+         * Check if a release exists since last admission's date
+         */ 
+        private bool ReleaseExistsSinceLastAdmission(string animalId, DateTime dateLastAdmission)
+        {
+            bool result = false;
+            NpgsqlCommand? sqlCmd = null;
+            NpgsqlDataReader? reader = null;
+
+            try
+            {
+                sqlCmd = new NpgsqlCommand(
+                    """
+                    SELECT EXISTS(
+                        SELECT 1
+                        FROM public."Releases"
+                        WHERE "AnimalId" = :animalId AND "DateCreated" > :dateLastAdmission
+                    )
+                    """,
+                    this.SqlConn
+                );
+
+                sqlCmd.Parameters.Add(new NpgsqlParameter("animalId", NpgsqlTypes.NpgsqlDbType.Varchar));
+                sqlCmd.Parameters.Add(new NpgsqlParameter("dateLastAdmission", NpgsqlTypes.NpgsqlDbType.TimestampTz));
+
+                sqlCmd.Prepare();
+
+                sqlCmd.Parameters["animalId"].Value = animalId;
+                sqlCmd.Parameters["dateLastAdmission"].Value = dateLastAdmission;
+
+                reader = sqlCmd.ExecuteReader();
+
+                if (reader.Read())
+                {
+                    result = Convert.ToBoolean(reader["exists"]);
+                }
+
+                reader.Close();
+
+
+
+            }
+            catch (Exception ex)
+            {
+                if (reader != null) { reader.Close(); }
+
+                Console.Error.WriteLine(ex.Message);
+
+                if (Debugger.IsAttached)
+                    Debug.WriteLine($"Error while checking if an animal's release already exists since last admission in DB. Error : {ex.Message}. Exception : {ex}.");
+
+                if (sqlCmd != null)
+                    throw new AccessDbException(sqlCmd.CommandText, $"Error while checking if an animal's release already exists since last admission in DB. Error : {ex.Message}. Exception : {ex}.");
+                else
+                    throw new AccessDbException("AdmissionExistsSinceLastRelease : sqlCmd is null", $"Error while checking if an animal's release already exists since last admission in DB. Error : {ex.Message}. Exception : {ex}.");
+            }
+
+            return result;
+
+        }
+
+
+        /**
+         * Check if an animal is already in a foster family 
+         */ 
+        public bool IsInFosterFamily(string animalId)
+        {
+            bool result = false;
+            NpgsqlCommand? sqlCmd = null;
+            NpgsqlDataReader? reader = null;
+
+            try
+            {
+                sqlCmd = new NpgsqlCommand(
+                    """
+                    SELECT EXISTS(
+                        SELECT 1
+                        FROM public."FosterFamilies"
+                        WHERE "AnimalId" = :animalId AND "DateEnd" IS NULL
+                        LIMIT 1
+                    )
+                    """,
+                    this.SqlConn
+                );
+
+                sqlCmd.Parameters.Add(new NpgsqlParameter("animalId", NpgsqlTypes.NpgsqlDbType.Varchar));
+                
+                sqlCmd.Prepare();
+
+                sqlCmd.Parameters["animalId"].Value = animalId; 
+
+                reader = sqlCmd.ExecuteReader();
+
+                if (reader.Read())
+                {
+                    result = Convert.ToBoolean(reader["exists"]);
+                }
+
+                reader.Close();  
+
+
+
+            }
+            catch (Exception ex)
+            {
+                if (reader != null) { reader.Close(); }
+
+                Console.Error.WriteLine(ex.Message);
+
+                if (Debugger.IsAttached)
+                    Debug.WriteLine($"Error while checking if an animal is already in a foster family in DB. Error : {ex.Message}. Exception : {ex}.");
+
+                if (sqlCmd != null)
+                    throw new AccessDbException(sqlCmd.CommandText, $"Error while checking if an animal is already in a foster family in DB. Error : {ex.Message}. Exception : {ex}.");
+                else
+                    throw new AccessDbException("AdmissionExistsSinceLastRelease : sqlCmd is null", $"Error while checking if an animal is already in a foster family in DB. Error : {ex.Message}. Exception : {ex}.");
+            }
+
+            return result;
+        }
+
     }
 }

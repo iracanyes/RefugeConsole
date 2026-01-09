@@ -8,11 +8,11 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
     internal class Vaccination
     {
         // Constructor used by EntityFramework
-        public Vaccination(DateOnly dateVaccination, bool done, Animal animal, Vaccine vaccine)
+        public Vaccination(DateOnly? dateVaccination, bool done, Animal animal, Vaccine vaccine)
             : this(Guid.NewGuid(), DateTime.Now, dateVaccination, done, animal, vaccine)
         { }
 
-        public Vaccination(Guid id, DateTime dateCreated, DateOnly dateVaccination, bool done, Animal animal, Vaccine vaccine) {
+        public Vaccination(Guid id, DateTime dateCreated, DateOnly? dateVaccination, bool done, Animal animal, Vaccine vaccine) {
             ArgumentNullException.ThrowIfNull(animal, nameof(animal));
             ArgumentNullException.ThrowIfNull(vaccine, nameof(vaccine));
 
@@ -35,7 +35,7 @@ namespace RefugeConsole.ClassesMetiers.Model.Entities
         public DateTime DateCreated { get; set; }
 
         [Required]
-        public DateOnly DateVaccination { get; set; }
+        public DateOnly? DateVaccination { get; set; }
         [Required]
         public bool Done { get; set; }
         [Required]

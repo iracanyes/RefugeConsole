@@ -23,21 +23,30 @@ namespace RefugeConsole.CouchePresentation.ViewModel
             this.compatibilities = animalDataService.GetCompatibilities();
         }
 
+        /**
+         * <summary>
+         *  Fonctionnalité : Gère la vue pour rechercher un animal par son nom
+         * </summary>
+         */
         public Animal GetAnimalByName()
         {
             Animal? animalInfo = null;
 
+            // Raffraichir l'écran
+            Console.Clear();
+            Console.WriteLine("Recherche d'animaux par leur nom\n=======================================\n\n");
+
             try
             {
-                // Get the animal's name from user
+                // Demander le nom de l'animal
                 string name = SharedView.InputString("Entrez le nom de l'animal : ");
 
-                // Retrieve animals with same name from DB
+                // Récupére les animaux ayant le même nom
                 List<Animal> animalInfos = animalDataService.GetAnimalByName(name);
                 
 
-                // If one result set to animalInfo object,
-                // else if more than one result display retrieved animals' info and handle asking for the id of the animal desired 
+                // Si un seul résultat, retourne l'objet
+                // si plusieurs résultats, afficher les résultats, demande l'identifiant de l'animal et retourné l'objet correspondant 
                 if (animalInfos.Count == 1)
                 {
                     animalInfo = animalInfos[0];
@@ -45,11 +54,13 @@ namespace RefugeConsole.CouchePresentation.ViewModel
                 else if (animalInfos.Count > 1)
                 {
 
+                    // Affichage des animaux trouvés
                     foreach (Animal animal in animalInfos)
                     {
                         AnimalView.DisplayAnimal(animal);
                     }
 
+                    // Saisie de l'ID de l'animal par l'utilisateur
                     string id = SharedView.InputString("Entrez l'identifiant de l'animal désiré : ");
                     animalInfo = animalDataService.GetAnimalById(id);
                 }
@@ -75,12 +86,18 @@ namespace RefugeConsole.CouchePresentation.ViewModel
             return animalInfo!;
         }
 
-
+        /**
+         * <summary>
+         *  Fonctionnalité : Consulter un animal
+         * </summary>
+         */
         public void ViewAnimal()
         {
             try
             {
+                // Saisie du nom de l'animal
                 string name = SharedView.InputString("Entrez le nom de l'animal : ");
+                // Lister les animaux ayant le même nom
                 List<Animal> animals = animalDataService.GetAnimalByName(name);
 
                 if (animals.Count == 0)
@@ -90,109 +107,96 @@ namespace RefugeConsole.CouchePresentation.ViewModel
                     return;
                 }
 
+                // Affichage
                 foreach(Animal animal in  animals) 
                     AnimalView.DisplayAnimal(animal);
 
-                SharedView.WaitForKeyPress();
+                
             }
             catch (Exception ex) {
                 Debug.WriteLine($"Error while retrieving an animal! Reason : {ex.Message} \nException: {ex}");
             }
 
+            // Saisie d'une touche pour continuer
+            SharedView.WaitForKeyPress();
+
         }
 
+        /**
+         * <summary>
+         *  Fonctionnalité : Ajouter un animal
+         * </summary>
+         */
         public Animal AddAnimal()
         {
             Animal? result = null;
 
+            // Raffraichir l'écran
+            Console.Clear();
+            Console.WriteLine("Ajouter un animal\n=======================================\n\n");
+
             try
             {
-                // Require a animal name which is unique
-                // Display view to get animal info from user
+                
+                // Saisie par utilisateur des données de l'animal
                 Animal animalInfo = AnimalView.AddAnimal();
 
-                // retrieve animal colors in DB
+                // Récupération de la liste des couleurs d'animaux
                 List<Color> colors = animalDataService.GetColors().ToList();
 
-                // Require animal's colors input from user
+                // Saisie par utilisateur des couleurs de l'animal
                 AnimalView.AddColors(animalInfo, colors);
 
 
-                //Debug.WriteLine($"Animal ID : {animalInfo.Id}"); 
-                //MyLogger.LogInformation($"Animal ID : {animalInfo.Id}");
-
-                // Save the animal's information
+                // Sauvegarde de l'animal
                 result = animalDataService.CreateAnimal(animalInfo);
 
-                // Save animal's colors in database
+                // Sauvegarde des couleurs de l'animal
                 foreach (AnimalColor animalColor in animalInfo.AnimalColors) {
                     animalDataService.CreateAnimalColor(animalColor);
                 }
                 
-                // Handle adding animal compatibilities
+                // Ajout des compatibilités pour l'animal
                 this.AddAnimalCompatibilities(result);
 
-                // Display the newly created animal
+                // Affichage de l'animal
                 AnimalView.DisplayAnimal(result);
 
-                // Lock screen until any key press
-                SharedView.WaitForKeyPress();
+                
 
             }
             catch (Exception ex) {
-                if(Debugger.IsAttached)
+                Console.Error.WriteLine($"Error while creating an animal. Reason : {ex.Message}.Exception : {ex}");
+
+                if (Debugger.IsAttached)
                     Debug.WriteLine($"Error while creating an animal. Reason : {ex.Message}.Exception : {ex}");
             }
+
+            // Saisie d'une touche pour continuer
+            SharedView.WaitForKeyPress();
 
             return result!;
         }
 
-        public void UpdateAnimal()
-        {
-            Animal? animalInfo = null;
 
-            try
-            {
-                animalInfo = this.GetAnimalByName();
-
-                // Stop if no animal found with the name
-                if (animalInfo == null)
-                {
-                    Console.WriteLine($"Animal not found!");
-                    SharedView.WaitForKeyPress();
-                    return;
-                }
-
-                // Get updated animal's infos from user
-                Animal updatedAnimalInfo = AnimalView.UpdateAnimal(animalInfo);
-
-                // Update animal's infos in DB
-                Animal updatedAnimal = animalDataService.UpdateAnimal(updatedAnimalInfo);
-
-                // Handle adding new compatibilities for the animal
-                this.AddAnimalCompatibilities(updatedAnimal);
-
-                // Display animal's infos
-                AnimalView.DisplayAnimal(updatedAnimal);
-
-                // Lock screen until any key press
-                SharedView.WaitForKeyPress();
-
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error while updating the animal! Reason : {ex.Message}\nException:\n{ex}");
-            }
-        }
-
+        /**
+         * <summary>
+         *  Fonctionnalité : Supprimer un animal
+         * </summary>
+         */
         public void RemoveAnimal() {
             Animal? animalInfo = null;
 
+            // Raffraichir l'écran
+            Console.Clear();
+            Console.WriteLine("Supprimer un animal\n=======================================\n\n");
+
             try
             {
+                // Récupération de l'animal par son nom
                 animalInfo = this.GetAnimalByName();
 
-                // Stop if no animal found with the name
+                // Si aucun animal
                 if (animalInfo == null)
                 {
                     Console.WriteLine($"L'animal n'existe pas dans la base de donnée!");
@@ -200,56 +204,44 @@ namespace RefugeConsole.CouchePresentation.ViewModel
                     return;
                 }
 
-                // Remove animal from DB
+                // Supprimer l'animal en base de donnée
                 bool result = animalDataService.RemoveAnimal(animalInfo);
 
                 if (result) Console.WriteLine($"L'animal nommé {animalInfo.Name} a été supprimé!");
-
-                // Lock screen until key press
-                SharedView.WaitForKeyPress();
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error while removing an animal! Reason: {ex.Message}");
                 MyLogger.LogError($"Error while removing an animal! Reason: {ex.Message}");
             }
+
+            // Saisie d'une touche pour continuer
+            SharedView.WaitForKeyPress();
         }
 
+        /**
+         * <summary>
+         *  Fonctionnalité : Ajouter une compatibilité pour un animal
+         * </summary>
+         */
         public void AddAnimalCompatibilities(Animal? animal = null)
         {
             
             try
             {
-                // If animal is null, Ask the user to input the animal's name and retrieve it
+                // Si animal est nulle, rechercher l'animal par son nom
                 if(animal == null)
                 {
-                    string name = SharedView.InputString("Entrez le nom de l'animal : ");
-                    List<Animal> animalInfos = animalDataService.GetAnimalByName(name);
-
-                    if (animalInfos.Count == 1)
-                    {
-                        animal = animalInfos[0];
-                    }
-                    else if (animalInfos.Count > 1)
-                    {
-
-                        foreach (Animal animalFound in animalInfos)
-                        {
-                            AnimalView.DisplayAnimal(animalFound);
-                        }
-
-                        string id = SharedView.InputString("Entrez l'identifiant de l'animal désiré : ");
-                        animal = animalDataService.GetAnimalById(id);
-                    }
+                    animal = this.GetAnimalByName();
                 }
 
-                // Get a list of all available compatibilities
+                // Récupérer la liste des compatibilités
                 HashSet<Compatibility> compatibilities = animalDataService.GetCompatibilities();
 
-                // Ask the user to input compatibilities for the animal and add AnimalCompatibility instances for the animal receive in argument
+                // Affiche la vue qui gère l'ajout de compatibilité à un animal
                 AnimalView.AddAnimalCompatibilities(animal!, compatibilities);
 
-                // If AnimalCompatibilities list isn't empty, save all n
+                // Si l'animal contient des objets "AnimalCompatiblility", alors on sauvegarde les nouvelles compatibilités
                 if (animal!.AnimalCompatibilities.Count != 0)
                 {
                     foreach (AnimalCompatibility animalCompatibility in animal.AnimalCompatibilities)
@@ -263,9 +255,13 @@ namespace RefugeConsole.CouchePresentation.ViewModel
             }
             catch (Exception ex)
             {
+                Console.Error.WriteLine($"Error while adding compatibilities to an animal! Reason : {ex.Message}\nException:\n{ex}");
 
-                Debug.WriteLine($"Error while adding compatibilities to an animal! Reason : {ex.Message}\nException:\n{ex}");
+                if(Debugger.IsAttached)
+                    Debug.WriteLine($"Error while adding compatibilities to an animal! Reason : {ex.Message}\nException:\n{ex}");
             }
+
+
         }
     }
 }

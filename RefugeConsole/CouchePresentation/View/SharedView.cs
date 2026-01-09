@@ -1,16 +1,18 @@
 ﻿using Microsoft.Extensions.Logging;
 using RefugeConsole.ClassesMetiers.Helper;
+using RefugeConsole.ClassesMetiers.Model.Enums;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace RefugeConsole.CouchePresentation.View
 {
     internal class SharedView
     {
         private static readonly ILogger MyLogger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger(nameof(SharedView));
-        public static string InputString(string label)
+        public static string InputString(string label, string? regex = null, string? errorMessage = null)
         {
             string? result = null;
             bool correct = false;
@@ -21,11 +23,16 @@ namespace RefugeConsole.CouchePresentation.View
                 try
                 {
                     result = Console.ReadLine()!.Trim();
-                    correct = true;
+
+                    // If a constraint exists, apply it 
+                    correct = regex != null ? Regex.Match(result, regex).Success : true;
+
+                    if (!correct) Console.Error.WriteLine(errorMessage);
                 }
                 catch (Exception ex)
                 {
                     MyLogger.LogError("Error while reading input from user. Reason : {0}", ex.Message);
+
                 }
             } while (!correct);
 
@@ -139,7 +146,7 @@ namespace RefugeConsole.CouchePresentation.View
             return (DateTime) result;
         }
 
-        public static DateOnly InputDateOnly(string label)
+        public static DateOnly InputDateOnly(string label, DateOnly? dateToCompare = null, DateComparator? dateComparator = null)
         {
             DateOnly result = default;
             string? line;
@@ -152,8 +159,35 @@ namespace RefugeConsole.CouchePresentation.View
                     Console.WriteLine(label);
                     line = Console.ReadLine();
 
-                    correct = DateOnly.TryParse(line, System.Globalization.CultureInfo.GetCultureInfo("fr-FR"), out result);
+                    bool parseSuccess = DateOnly.TryParse(line, System.Globalization.CultureInfo.GetCultureInfo("fr-FR"), out result);
 
+                    if (parseSuccess)
+                    {
+                        if (dateToCompare != null && dateComparator != null) {
+
+                            switch (dateComparator)
+                            {
+                                case DateComparator.GreaterThan:
+                                    correct = result > dateToCompare;
+                                    break;
+                                case DateComparator.GreaterThanOrEqual:
+                                    correct = result >= dateToCompare;
+                                    break;
+                                case DateComparator.LessThan:
+                                    correct = result < dateToCompare;
+                                    break;
+                                case DateComparator.LessThanOrEqual:
+                                    correct = result <= dateToCompare;
+                                    break;
+
+                            }
+                        }
+                        else
+                        {
+                            correct = true;
+                        }
+                            
+                    }           
 
 
                 }

@@ -18,12 +18,14 @@ namespace RefugeConsole.CoucheAccesDB
 
         public AnimalDataService()
             : base() { }
-        
+
 
 
         /**
+         * <summary>
          * Create an animal record in database
-         */ 
+         * </summary>
+         */
         public Animal CreateAnimal(Animal animal)
         {
             Animal? result = null;
@@ -87,7 +89,11 @@ namespace RefugeConsole.CoucheAccesDB
             return result;
         }
 
-        
+        /**
+         * <summary>
+         * Create an animal record in database
+         * </summary>
+         */
         public List<Animal> GetAnimalByName(string name)
         {
             List<Animal> result = [];
@@ -165,6 +171,11 @@ namespace RefugeConsole.CoucheAccesDB
             return result;
         }
 
+        /**
+         * <summary>
+         * Create an animal record in database
+         * </summary>
+         */
         public Animal? GetAnimalById(string id)
         {
             Animal? result = null;
@@ -240,6 +251,11 @@ namespace RefugeConsole.CoucheAccesDB
             return result;
         }
 
+        /**
+         * <summary>
+         * Create an animal record in database
+         * </summary>
+         */
         public HashSet<AnimalColor> GetAnimalColors(Animal animal)
         {
             NpgsqlCommand? sqlCmd = null;
@@ -304,6 +320,11 @@ namespace RefugeConsole.CoucheAccesDB
 
         }
 
+        /**
+         * <summary>
+         * Create an animal record in database
+         * </summary>
+         */
         public bool RemoveAnimal(Animal animal)
         {
             bool result = false;
@@ -342,6 +363,11 @@ namespace RefugeConsole.CoucheAccesDB
             return result;
         }
 
+        /**
+         * <summary>
+         * Create an animal record in database
+         * </summary>
+         */
         public Animal UpdateAnimal(Animal animal)
         {
             Animal? result = null;
@@ -417,6 +443,11 @@ namespace RefugeConsole.CoucheAccesDB
             return result!;
         }
 
+        /**
+         * <summary>
+         * Create an animal record in database
+         * </summary>
+         */
         public bool CreateCompatibility(Compatibility compatibility, NpgsqlTransaction? transaction = null) {
             bool result = false;
             NpgsqlCommand? sqlCmd = null;
@@ -459,6 +490,11 @@ namespace RefugeConsole.CoucheAccesDB
             return result;
         }
 
+        /**
+         * <summary>
+         * Create an animal record in database
+         * </summary>
+         */
         public bool CreateAnimalCompatibility(AnimalCompatibility animalCompatibility)
         {
             bool result = false;
@@ -504,7 +540,11 @@ namespace RefugeConsole.CoucheAccesDB
             return result;
         }
 
-
+        /**
+         * <summary>
+         * Create an animal record in database
+         * </summary>
+         */
         public HashSet<Compatibility> GetCompatibilities()
         {
             HashSet<Compatibility> result = new HashSet<Compatibility>();
@@ -554,6 +594,11 @@ namespace RefugeConsole.CoucheAccesDB
 
         }
 
+        /**
+         * <summary>
+         * Create an animal record in database
+         * </summary>
+         */
         public HashSet<Color> GetColors()
         {
             HashSet<Color> colors = new HashSet<Color>();
@@ -598,6 +643,11 @@ namespace RefugeConsole.CoucheAccesDB
             return colors;
         }
 
+        /**
+         * <summary>
+         * Gére 
+         * </summary>
+         */
         public bool CreateAnimalColor(AnimalColor animalColor, NpgsqlTransaction? transaction = null)
         {
             bool result = false;
