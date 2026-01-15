@@ -125,8 +125,9 @@ docker/db/password.txt
 
 
 # Jetbrains DataGrid
-/data
+/data/queries
 **/*.sql
+!/data/creertables_1.sql
 **/queries
-
+**/.idea
 
