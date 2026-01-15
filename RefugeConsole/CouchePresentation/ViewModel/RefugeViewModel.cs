@@ -301,10 +301,15 @@ namespace RefugeConsole.CouchePresentation.ViewModel
 
             try
             {
-                // Lister les animaux en familles d'accueil 
-                fosterFamilies = this.refugeDataService.GetFosterFamilies();
+                Contact contact = this.GetContact();
 
-                // Affichage 
+
+                // Lister les animaux en familles d'accueil 
+                fosterFamilies = this.refugeDataService.GetAnimalsInFosterFamily(contact);
+
+                // Affichage de la famille d'accueil
+
+                // Affichage des animaux
                 foreach( FosterFamily fosterFamily in fosterFamilies ) 
                     RefugeView.DisplayFosterFamily(fosterFamily);
 

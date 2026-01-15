@@ -44,6 +44,9 @@ namespace RefugeConsole.CoucheAccesDB
          */
         HashSet<FosterFamily> GetFosterFamilies();
 
+
+        HashSet<FosterFamily> GetAnimalsInFosterFamily(Contact contact);
+
         /**
          * <summary>
          *  Lister les familles d'accueil par lesquelles un animal est passé

@@ -65,7 +65,7 @@ namespace RefugeConsole.CouchePresentation.View
             GenderType gender = SharedView.EnumChoice<GenderType>("Entrez le sexe de l'animal : ");
 
             
-            DateOnly birthDate = SharedView.InputDateOnly("Entrez la date de naissance de l'animal : (Format : ) ");
+            DateOnly birthDate = SharedView.InputDateOnly("Entrez la date de naissance de l'animal : (Format : dd/mm/yyyy ) ", DateOnly.FromDateTime(DateTime.Now), DateComparator.LessThanOrEqual);
             
             // Check if is alive or record death date
             bool isAlive = SharedView.InputBoolean("Est-il vivant?");

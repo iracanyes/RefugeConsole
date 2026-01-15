@@ -514,6 +514,108 @@ namespace RefugeConsole.CoucheAccesDB
             return result;
         }
 
+        public HashSet<FosterFamily> GetAnimalsInFosterFamily(Contact contact)
+        {
+            HashSet<FosterFamily> result = new HashSet<FosterFamily>();
+            NpgsqlCommand? sqlCmd = null;
+            NpgsqlDataReader? reader = null;
+
+            try
+            {
+                sqlCmd = new NpgsqlCommand(
+                    """
+                    SELECT ff."Id" AS "Id",
+                           ff."DateCreated" AS "DateCreated",
+                           ff."DateStart" AS "DateStart",
+                           ff."DateEnd" AS "DateEnd",
+                           ff."AnimalId" AS "AnimalId",
+                           ff."ContactId" AS "ContactId",
+                           a."Name" AS "Name",
+                           a."Type" AS "Type",
+                           a."Gender" AS "Gender",
+                           a."BirthDate" AS "BirthDate",
+                           a."DeathDate" AS "DeathDate",
+                           a."IsSterilized" AS "IsSterilized",
+                           a."DateSterilization" AS "DateSterilization",
+                           a."Particularity" AS "Particularity",
+                           a."Description" AS "Description"
+                    FROM public."FosterFamilies" ff
+                    INNER JOIN public."Animals" a
+                        ON ff."AnimalId" = a."Id"
+                    WHERE ff."ContactId" = :contactId
+                    """,
+                    this.SqlConn
+
+                );
+
+
+                sqlCmd.Parameters.Add(new NpgsqlParameter("contactId", NpgsqlTypes.NpgsqlDbType.Uuid));
+
+                sqlCmd.Prepare();
+
+                sqlCmd.Parameters["contactId"].Value = contact.Id;
+
+
+                reader = sqlCmd.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    // Dates for foster family instance
+                    DateOnly dateStart = (DateOnly)reader["DateStart"];
+                    DateOnly? dateEnd = reader["DateEnd"] != DBNull.Value ? (DateOnly)reader["DateEnd"] : null;
+
+                    // Dates for animal's instance
+                    DateOnly? birthDate = reader["BirthDate"] != DBNull.Value ? (DateOnly)reader["BirthDate"] : null;
+                    DateOnly? deathDate = reader["DeathDate"] != DBNull.Value ? (DateOnly)reader["DeathDate"] : null;
+                    DateOnly? dateSterilization = reader["dateSterilization"] != DBNull.Value ? (DateOnly)reader["dateSterilization"] : null;
+
+                    //
+                    Animal animal = new Animal(
+                        Convert.ToString(reader["AnimalId"])!,
+                        Convert.ToString(reader["Name"])!,
+                        MyEnumHelper.GetEnumFromDescription<AnimalType>(Convert.ToString(reader["Type"])!),
+                        MyEnumHelper.GetEnumFromDescription<GenderType>(Convert.ToString(reader["Gender"])!),
+                        birthDate,
+                        deathDate,
+                        Convert.ToBoolean(reader["IsSterilized"])!,
+                        dateSterilization,
+                        Convert.ToString(reader["Particularity"])!,
+                        Convert.ToString(reader["Description"])!
+
+                    );
+
+
+                    result.Add(new FosterFamily(
+                        new Guid(Convert.ToString(reader["Id"])!),
+                        Convert.ToDateTime(reader["DateCreated"])!,
+                        dateStart,
+                        dateEnd,
+                        contact,
+                        animal
+                    ));
+
+                }
+
+                reader.Close();
+
+
+
+            }
+            catch (Exception ex)
+            {
+
+                if (reader != null) reader.Close();
+
+                if (sqlCmd != null)
+                    throw new AccessDbException(sqlCmd.CommandText, $"Error while retrieving animals in foster family provided. Error : {ex.Message}. Exception : {ex}");
+                else
+                    throw new AccessDbException("GetFosterFamilies : sqlCmd is null", $"Error while animals in foster family provided. Error : {ex.Message}. Exception : {ex}");
+            }
+
+
+            return result;
+        }
+
         public bool CreateReleaseForFosterFamily(FosterFamily fosterFamily, Release release)
         {
             bool result = false;
